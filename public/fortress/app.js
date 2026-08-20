@@ -59,31 +59,38 @@
   }
 
   function showPermissionGate() {
-    $("#adminWelcome").classList.remove("access-blocked");
+    $("#adminWelcome").classList.remove("access-warning");
     $("#welcomePermissionGate").hidden = false;
     $("#permissionReady").hidden = true;
     $("#permissionBlocked").hidden = true;
     $("#enterCommandCenter").hidden = true;
     $("#enterCommandCenter").disabled = true;
-    $("#welcomeMonitorState").textContent = "Permission required";
+    $("#welcomeMonitorState").textContent = "Requesting permission";
     $("#welcomeEnableMonitor").textContent = "Allow access";
     $("#welcomeEnableMonitor").disabled = false;
   }
 
-  function blockWebsite(reason) {
+  function showMonitoringWarning(reason) {
     $("#adminWelcome").hidden = false;
-    $("#adminWelcome").classList.add("access-blocked");
+    $("#adminWelcome").classList.add("access-warning");
     $("#welcomePermissionGate").hidden = true;
     $("#permissionReady").hidden = true;
     $("#permissionBlocked").hidden = false;
     $("#enterCommandCenter").hidden = true;
     $("#enterCommandCenter").disabled = true;
-    $("#welcomeMonitorState").textContent = "Access blocked";
-    $("#blockedReason").textContent = reason || "Camera or microphone permission was denied. Both permissions are required to use this administrator workspace.";
+    $("#welcomeMonitorState").textContent = "Monitoring off";
+    $("#blockedReason").textContent = reason || "Camera or microphone permission was declined. Monitoring is off, but administrator access can continue.";
     $("#appShell").inert = true;
     $("#assistantPanel").hidden = true;
     $("#assistantLauncher").hidden = true;
     document.body.classList.add("access-gated");
+  }
+
+  function enterAdminWorkspace() {
+    $("#adminWelcome").hidden = true;
+    $("#appShell").inert = false;
+    $("#assistantLauncher").hidden = false;
+    document.body.classList.remove("access-gated");
   }
 
   function showAdminWelcome(requestPermission = true) {
@@ -282,17 +289,17 @@
       $("#permissionReady").hidden = true;
     }
     if (active) {
-      $("#adminWelcome").classList.remove("access-blocked");
+      $("#adminWelcome").classList.remove("access-warning");
       $("#welcomePermissionGate").hidden = true;
       $("#permissionBlocked").hidden = true;
       $("#permissionReady").hidden = false;
       $("#enterCommandCenter").hidden = false;
       $("#enterCommandCenter").disabled = false;
     }
-    if (stateName === "denied") blockWebsite(detail.error || "Camera or microphone permission was denied. Both permissions are required to use this administrator workspace.");
+    if (stateName === "denied") showMonitoringWarning(detail.error || "Camera or microphone permission was declined. Monitoring is off, but administrator access can continue.");
     if (stateName === "stopped" && state.monitorWasActive) {
       state.monitorWasActive = false;
-      blockWebsite(detail.message || "Camera or microphone monitoring stopped. Restore both permissions to continue.");
+      if (!$("#adminWelcome").hidden) showMonitoringWarning(detail.message || "Camera or microphone monitoring stopped. Administrator access can continue without it.");
     }
     if (!active) updateMonitorMetrics({ motion: 0, light: 0, sound: 0, environment: "Unknown" });
   }
@@ -323,8 +330,8 @@
       toast("Local monitoring enabled", "Motion, light and sound are being analyzed in memory on this device.");
       return true;
     } catch (error) {
-      blockWebsite(`${error.message} Camera and microphone access is required for this protected workspace.`);
-      toast("Website access blocked", "Allow camera and microphone permissions to continue.", "error", 5600);
+      showMonitoringWarning(`${error.message} Administrator access can continue without monitoring.`);
+      toast("Monitoring unavailable", "You can retry the permissions or continue as administrator.", "error", 5600);
       return false;
     }
   }
@@ -332,7 +339,7 @@
   function stopMonitoring() {
     monitor.stop();
     security.log("LOCAL_MONITOR_DISABLED", "Administrator stopped local camera and microphone analysis", "info");
-    toast("Website access blocked", "Camera and microphone monitoring must remain active.", "error");
+    toast("Local monitoring stopped", "Administrator access remains available.");
   }
 
   function bindMonitoring() {
@@ -496,15 +503,10 @@
   function bindAdminWelcome() {
     renderAdminIdentity();
     $("#operatorProfile").addEventListener("click", () => showAdminWelcome(false));
-    $("#enterCommandCenter").addEventListener("click", () => {
-      if (!monitor.running) return blockWebsite("Camera and microphone monitoring is not active. Both permissions are required to enter.");
-      $("#adminWelcome").hidden = true;
-      $("#appShell").inert = false;
-      $("#assistantLauncher").hidden = false;
-      document.body.classList.remove("access-gated");
-    });
+    $("#enterCommandCenter").addEventListener("click", enterAdminWorkspace);
     $("#welcomeEnableMonitor").addEventListener("click", startMonitoring);
     $("#retryMonitorPermission").addEventListener("click", () => { showPermissionGate(); startMonitoring(); });
+    $("#continueWithoutMonitoring").addEventListener("click", enterAdminWorkspace);
     if (localStorage.getItem("nf4_master")) showAdminWelcome(true);
   }
 

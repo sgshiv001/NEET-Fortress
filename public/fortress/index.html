@@ -191,14 +191,14 @@
     <div class="welcome-orb welcome-orb-one"></div><div class="welcome-orb welcome-orb-two"></div>
     <div class="welcome-shell">
       <div class="welcome-brand"><span>NF</span><div><strong>NEET Fortress</strong><small>Administrator access</small></div></div>
-      <div class="welcome-content"><p id="welcomeTimeGreeting">Good morning</p><h1>Welcome, <span id="welcomeAdminName">Security Authority</span>.</h1><small id="welcomeDate">Thursday, 20 August 2026</small><p class="welcome-summary">Camera and microphone permission is required for this protected administrator session. The command center remains locked if access is denied.</p>
-        <div class="welcome-status-grid"><div><span>System posture</span><strong><i></i> Nominal</strong></div><div><span>Defense layers</span><strong>7 / 7 active</strong></div><div><span>Access monitoring</span><strong id="welcomeMonitorState">Permission required</strong></div></div>
+      <div class="welcome-content"><p id="welcomeTimeGreeting">Good morning</p><h1>Welcome, <span id="welcomeAdminName">Security Authority</span>.</h1><small id="welcomeDate">Thursday, 20 August 2026</small><p class="welcome-summary">This browser automatically requests camera and microphone access for local environmental monitoring. Administrators may continue if either permission is unavailable or declined.</p>
+        <div class="welcome-status-grid"><div><span>System posture</span><strong><i></i> Nominal</strong></div><div><span>Defense layers</span><strong>7 / 7 active</strong></div><div><span>Access monitoring</span><strong id="welcomeMonitorState">Requesting permission</strong></div></div>
         <div class="welcome-monitor-consent required" id="welcomePermissionGate"><span>◎</span><div><strong>Allow camera and microphone</strong><p>Your browser will request access now. Media is analyzed locally for motion, light, and sound; it is never recorded or uploaded.</p></div><button class="primary-btn" id="welcomeEnableMonitor">Allow access</button></div>
         <div class="welcome-monitor-consent ready" id="permissionReady" hidden><span>✓</span><div><strong>Permission granted</strong><p>Local monitoring is active. You can now enter the protected command center.</p></div></div>
-        <div class="permission-blocked" id="permissionBlocked" hidden><span>!</span><div><strong>Website access blocked</strong><p id="blockedReason">Camera or microphone permission was denied. Both permissions are required to use this administrator workspace.</p><small>If the browser remembers your denial, allow Camera and Microphone in the site permissions menu, then try again.</small></div><button class="primary-btn" id="retryMonitorPermission">Try permission again</button></div>
+        <div class="permission-blocked" id="permissionBlocked" hidden><span>!</span><div><strong>Monitoring permission unavailable</strong><p id="blockedReason">Camera or microphone permission was declined. Monitoring is off, but administrator access can continue.</p><small>You can retry now or enable Camera and Microphone later from the browser’s site-permissions menu.</small></div><div class="permission-actions"><button class="secondary-btn" id="continueWithoutMonitoring">Continue without monitoring</button><button class="primary-btn" id="retryMonitorPermission">Try again</button></div></div>
         <button class="primary-btn welcome-enter" id="enterCommandCenter" hidden disabled>Enter command center →</button>
       </div>
-      <p class="welcome-foot">Required for protected access · Media is never recorded or uploaded · Identity recognition is not used</p>
+      <p class="welcome-foot">Requested automatically in each browser · Optional for administrators · Media is never recorded or uploaded</p>
     </div>
   </section>
 
