@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NEET Fortress — Safe Attack Simulator</title><link rel="stylesheet" href="styles.css">
+  <style>
+    body{min-height:100vh;background:#090d16}.attack-shell{max-width:1100px;margin:auto;padding:40px 22px}.attack-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}.attack-head p{font:8px var(--mono);letter-spacing:.15em;color:#f97066;text-transform:uppercase}.attack-head h1{font-size:28px;margin:6px 0}.attack-head a{color:#a5b4fc;font-size:9px}.lab-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.attack-card{padding:19px}.attack-card span{width:35px;height:35px;border-radius:9px;display:grid;place-items:center;background:#32171b;color:#f97066;font:8px var(--mono)}.attack-card h2{font-size:14px;margin:14px 0 6px}.attack-card p{font-size:9px;color:var(--muted);line-height:1.55;min-height:42px}.attack-card button{width:100%;margin-top:10px}.lab-status{margin-top:13px;padding:19px;display:grid;grid-template-columns:1fr auto;gap:20px}.lab-status strong{font:24px var(--mono)}.lab-status p{font-size:9px;color:var(--muted)}.lab-status b{align-self:start}.attack-log{margin-top:13px;padding:18px}.attack-log pre{max-height:280px;overflow:auto;background:#080b12;border:1px solid #232b39;border-radius:8px;padding:14px;color:#b9c6dc;font:8px/1.7 var(--mono)}@media(max-width:700px){.lab-grid{grid-template-columns:1fr}.attack-head{align-items:flex-start;gap:15px}.lab-status{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="attack-shell">
+    <header class="attack-head"><div><p>Isolated defensive test surface</p><h1>Attack simulator</h1><small>Trigger the four local detection engines without sending any network traffic.</small></div><a href="index.html">← Return to command center</a></header>
+    <div class="lab-grid">
+      <article class="card attack-card"><span>BF</span><h2>Brute-force burst</h2><p>Simulates five failed master-passphrase attempts inside a five-minute observation window.</p><button class="danger-btn" data-engine="BRUTE_FORCE">Run simulation</button></article>
+      <article class="card attack-card"><span>RL</span><h2>Rate-limit breach</h2><p>Simulates three authentication attempts arriving inside thirty seconds.</p><button class="danger-btn" data-engine="RATE_LIMITER">Run simulation</button></article>
+      <article class="card attack-card"><span>AD</span><h2>Automation timing</h2><p>Creates a sequence with mechanically regular attempt intervals.</p><button class="danger-btn" data-engine="AUTOMATION">Run simulation</button></article>
+      <article class="card attack-card"><span>CS</span><h2>Credential stuffing</h2><p>Uses four different credential identifiers from the same device fingerprint.</p><button class="danger-btn" data-engine="CREDENTIAL_STUFFING">Run simulation</button></article>
+    </div>
+    <section class="card lab-status"><div><small>Current protection state</small><strong id="testState">READY</strong><p id="testDetail">No simulated attack has been launched in this session.</p></div><button class="secondary-btn" id="resetTest">Reset protection state</button></section>
+    <section class="card attack-log"><div class="card-title"><div><span>Real-time test log</span><p>Local simulator events only</p></div></div><pre id="testLog">[READY] Defensive engines initialized.</pre></section>
+  </main>
+  <script src="dsa.js"></script><script src="security.js"></script><script src="ai.js"></script><script src="lockdown.js"></script>
+  <script>
+    const security=new SecurityCore(),sentinel=new AISentinel(),guard=new LockdownGuard(sentinel,security),log=document.querySelector('#testLog');
+    const reasons={BRUTE_FORCE:'Five failed attempts within five minutes',RATE_LIMITER:'Three attempts within thirty seconds',AUTOMATION:'Regular scripted attempt intervals',CREDENTIAL_STUFFING:'Four credentials used from one device'};
+    function line(text){log.textContent+='\n['+new Date().toLocaleTimeString()+'] '+text;log.scrollTop=log.scrollHeight}
+    document.querySelectorAll('[data-engine]').forEach(button=>button.addEventListener('click',()=>{const engine=button.dataset.engine;line('Launching '+engine+' scenario…');for(let i=1;i<=4;i++)line('Attempt '+i+' captured · device '+security.fingerprint.slice(0,8));guard.trigger(reasons[engine],engine);document.querySelector('#testState').textContent='LOCKDOWN TRIGGERED';document.querySelector('#testState').style.color='#f97066';document.querySelector('#testDetail').textContent=engine+': '+reasons[engine]+'. The main app will display the protection overlay.';line('Protection response confirmed. State persisted locally.')}));
+    document.querySelector('#resetTest').addEventListener('click',()=>{guard.clear(false);document.querySelector('#testState').textContent='READY';document.querySelector('#testState').style.color='';document.querySelector('#testDetail').textContent='Protection state cleared. The next scenario can run safely.';line('Simulator and lockdown state reset.')});
+  </script>
+</body></html>

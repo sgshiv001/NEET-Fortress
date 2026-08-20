@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>NEET Fortress v4 — Examination Security OS</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-row">
+        <div class="brand-mark">NF</div>
+        <div class="brand-copy"><strong>NEET Fortress</strong><span>Security OS · v4.0</span></div>
+        <button class="collapse-btn" id="collapseBtn" aria-label="Collapse sidebar">‹</button>
+      </div>
+      <nav class="main-nav" aria-label="Primary navigation">
+        <button class="nav-btn active" data-view="command"><span class="nav-icon">01</span><span class="nav-label">Command center</span></button>
+        <button class="nav-btn" data-view="questions"><span class="nav-icon">02</span><span class="nav-label">Question bank</span><b>924</b></button>
+        <button class="nav-btn" data-view="teachers"><span class="nav-icon">03</span><span class="nav-label">Teacher portal</span></button>
+        <button class="nav-btn" data-view="papers"><span class="nav-icon">04</span><span class="nav-label">Paper sets</span><i class="live-dot"></i></button>
+        <button class="nav-btn" data-view="morph"><span class="nav-icon">05</span><span class="nav-label">Morphing lab</span></button>
+        <button class="nav-btn" data-view="sentinel"><span class="nav-icon">06</span><span class="nav-label">AI Sentinel</span></button>
+        <button class="nav-btn" data-view="dsa"><span class="nav-icon">07</span><span class="nav-label">DSA visualizer</span></button>
+        <div class="nav-separator"></div>
+        <button class="nav-btn" data-view="security"><span class="nav-icon">08</span><span class="nav-label">Security audit</span></button>
+        <button class="nav-btn" data-view="encryption"><span class="nav-icon">09</span><span class="nav-label">Encryption</span></button>
+        <button class="nav-btn" data-view="unlock"><span class="nav-icon">10</span><span class="nav-label">Exam unlock</span></button>
+        <button class="nav-btn" data-view="shadow"><span class="nav-icon">11</span><span class="nav-label">Shadow paper</span></button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="system-pill"><i></i><div><strong>All systems nominal</strong><span>7/7 layers active</span></div></div>
+        <button class="operator"><span>SA</span><div><strong>Security Authority</strong><small>Central command</small></div><b>•••</b></button>
+      </div>
+    </aside>
+
+    <main class="main-stage">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Open menu">☰</button>
+        <div><p>National examination security grid</p><h1 id="viewTitle">Command center</h1></div>
+        <div class="top-actions">
+          <button class="icon-button" id="themeToggle" aria-label="Toggle theme">◐</button>
+          <button class="status-button"><i></i> Live monitoring</button>
+          <button class="icon-button notification" id="notificationBtn" aria-label="Notifications">•<span id="alertCount">2</span></button>
+        </div>
+      </header>
+
+      <div class="view-stack">
+        <section class="view active" id="view-command" data-title="Command center">
+          <div class="hero-grid">
+            <article class="card countdown-panel">
+              <div class="card-kicker"><span>Exam window</span><b class="chip success">Secure</b></div>
+              <p>Time to final assembly</p>
+              <div class="clock" id="examCountdown"><strong>05</strong><i>:</i><strong>42</strong><i>:</i><strong>18</strong></div>
+              <div class="clock-labels"><span>Hours</span><span>Minutes</span><span>Seconds</span></div>
+              <div class="meter"><i style="width:76%"></i></div>
+              <small>Final paper assembly begins at T−6 hours</small>
+            </article>
+            <article class="card sentinel-panel">
+              <div class="card-kicker"><span>AI Sentinel</span><button class="text-btn" data-go="sentinel">Open console ↗</button></div>
+              <div class="gauge low" id="threatGauge"><div><strong id="threatValue">08</strong><span>%</span><small>Low threat</small></div></div>
+              <div class="split-stats"><div><strong id="eventScanCount">2,847</strong><span>Events scanned</span></div><div><strong id="criticalCount">0</strong><span>Critical alerts</span></div></div>
+            </article>
+          </div>
+          <div class="metric-grid">
+            <article class="metric-card"><span class="metric-icon indigo">P</span><div><small>Active papers</small><strong>100</strong><p><b>↻</b> Shuffling every second</p></div></article>
+            <article class="metric-card"><span class="metric-icon teal">Q</span><div><small>Question vault</small><strong id="bankMetric">924</strong><p><b>+18</b> accepted this week</p></div></article>
+            <article class="metric-card"><span class="metric-icon amber">L</span><div><small>Security layers</small><strong>7 / 7</strong><p><b>●</b> Fully operational</p></div></article>
+            <article class="metric-card"><span class="metric-icon violet">T</span><div><small>Trusted teachers</small><strong id="teacherMetric">248</strong><p><b>94.2%</b> avg. reputation</p></div></article>
+          </div>
+          <div class="dashboard-grid">
+            <article class="card activity-card">
+              <div class="card-title"><div><span>Security activity</span><p>Live event stream</p></div><button class="text-btn" data-go="security">View audit trail</button></div>
+              <div id="activityFeed" class="event-list"></div>
+            </article>
+            <article class="card defense-card">
+              <div class="card-title"><div><span>Defense matrix</span><p>All layers responding</p></div><b class="chip success">7 / 7</b></div>
+              <div class="layer-list">
+                <div><span>1</span><strong>Continuous shuffle</strong><i>Active</i></div>
+                <div><span>2</span><strong>Question morphing</strong><i>Active</i></div>
+                <div><span>3</span><strong>Access tracking</strong><i>Active</i></div>
+                <div><span>4</span><strong>AES-256-GCM</strong><i>Active</i></div>
+                <div><span>5</span><strong>RSA key exchange</strong><i>Active</i></div>
+                <div><span>6</span><strong>Secret sharing</strong><i>Active</i></div>
+                <div><span>7</span><strong>Time lock</strong><i>Active</i></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-questions" data-title="Question bank">
+          <div class="section-head"><div><p>Verified master repository</p><h2>Question vault</h2></div><button class="primary-btn" id="openSubmitQuestion">+ Submit question</button></div>
+          <div class="subject-stats" id="subjectStats"></div>
+          <div class="toolbar card"><label class="search-box"><span>⌕</span><input id="questionSearch" placeholder="Search question text or chapter…"></label><select id="subjectFilter"><option value="all">All subjects</option><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select><select id="difficultyFilter"><option value="all">All difficulty</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option></select><span class="result-count" id="questionResultCount"></span></div>
+          <div class="question-list" id="questionList"></div>
+          <div class="pagination"><button id="questionPrev">← Previous</button><span id="questionPage">Page 1</span><button id="questionNext">Next →</button></div>
+        </section>
+
+        <section class="view" id="view-teachers" data-title="Teacher portal">
+          <div class="section-head"><div><p>Nationwide contributor network</p><h2>Teacher quality pipeline</h2></div><button class="primary-btn" id="teacherSubmitBtn">+ New submission</button></div>
+          <div class="tabbar" data-tabs="teacherTabs"><button class="active" data-tab="submissions">Submissions</button><button data-tab="review">Peer review</button><button data-tab="teachers">Teachers</button><button data-tab="leaderboard">Leaderboard</button></div>
+          <div class="tab-panel active" data-panel="submissions"><div class="pipeline" id="submissionPipeline"></div><div class="card table-card"><div class="card-title"><div><span>Recent submissions</span><p>Automated quality gate and review state</p></div></div><div class="data-table" id="submissionTable"></div></div></div>
+          <div class="tab-panel" data-panel="review"><div class="review-grid" id="reviewQueue"></div></div>
+          <div class="tab-panel" data-panel="teachers"><div class="teacher-grid" id="teacherGrid"></div></div>
+          <div class="tab-panel" data-panel="leaderboard"><div class="card leaderboard" id="leaderboard"></div></div>
+        </section>
+
+        <section class="view" id="view-papers" data-title="Paper sets">
+          <div class="section-head"><div><p>RandomWizer generation grid</p><h2>100-paper hyper-shuffler</h2></div><div class="button-row"><button class="secondary-btn" id="toggleShuffler">Pause shuffler</button><button class="primary-btn" id="generatePapersBtn">Regenerate set</button></div></div>
+          <div class="paper-hero card"><div><span class="orbital"><i></i><b id="shuffleTick">0000</b></span><div><small>Current shuffle cycle</small><strong id="shuffleEntropy">99.8% entropy</strong><p>All 100 papers are reordered in memory every second. Final selection remains uncommitted.</p></div></div><div class="paper-hero-stats"><div><small>Status</small><strong class="green">Running</strong></div><div><small>Interval</small><strong>1,000 ms</strong></div><div><small>Set size</small><strong>18,000 Qs</strong></div></div></div>
+          <div class="card table-card"><div class="card-title"><div><span>Top 10 candidates</span><p>Ranked by quality, balance and lowest access count</p></div><button class="text-btn" id="selectFinalBtn">Assemble final paper ↗</button></div><div class="data-table" id="paperTable"></div></div>
+        </section>
+
+        <section class="view" id="view-morph" data-title="Morphing lab">
+          <div class="section-head"><div><p>Scientific-equivalence transformation engine</p><h2>Question morphing lab</h2></div><button class="secondary-btn" id="randomMorphQuestion">Pick random question</button></div>
+          <div class="morph-strategies" id="morphStrategies"><button class="active" data-strategy="numerical">Numerical</button><button data-strategy="structural">Structural</button><button data-strategy="conceptual">Conceptual</button><button data-strategy="distractor">Distractor</button><button data-strategy="stem">Stem swap</button><button data-strategy="hybrid">Hybrid</button></div>
+          <div class="morph-grid"><article class="card question-preview"><div class="card-kicker"><span>Original question</span><b id="morphOriginalId">Q-0001</b></div><p id="morphOriginalText"></p><div id="morphOriginalOptions" class="option-list"></div></article><article class="card question-preview morphed"><div class="card-kicker"><span>Morphed variant</span><b class="chip success" id="validityChip">94% valid</b></div><p id="morphOutputText"></p><div id="morphOutputOptions" class="option-list"></div></article></div>
+          <div class="morph-footer card"><div><span>Transformation confidence</span><strong id="validityScore">94%</strong></div><div class="validity-meter"><i id="validityBar" style="width:94%"></i></div><p id="morphRationale">Numerical relationships preserved; answer recalculated and distractors regenerated.</p><button class="primary-btn" id="runMorphBtn">Morph this question</button></div>
+        </section>
+
+        <section class="view" id="view-sentinel" data-title="AI Sentinel">
+          <div class="section-head"><div><p>Offline statistical threat analysis</p><h2>Sentinel operations</h2></div><button class="secondary-btn" id="runSentinelSweep">Run manual sweep</button></div>
+          <div class="sentinel-layout"><article class="card sentinel-main"><div class="large-gauge" id="largeGauge"><div><strong id="sentinelThreat">8</strong><span>%</span><small>Threat level</small></div></div><div><b class="chip success" id="sentinelState">Low risk</b><h3>Security posture is stable</h3><p>Rule-based engines are continuously checking access velocity, timing regularity, device reuse and credential variation.</p></div></article><article class="card recommendation-card"><div class="card-title"><div><span>Recommendations</span><p>Prioritized security actions</p></div></div><div id="sentinelRecommendations"></div></article></div>
+          <div class="card table-card"><div class="card-title"><div><span>Threat event history</span><p>Locally recorded access and anomaly signals</p></div></div><div class="data-table" id="sentinelTable"></div></div>
+        </section>
+
+        <section class="view" id="view-dsa" data-title="DSA visualizer">
+          <div class="section-head"><div><p>Eight defensive data structures</p><h2>Algorithm laboratory</h2></div><button class="secondary-btn" id="runDsaDemo">Run demonstration</button></div>
+          <div class="dsa-tabs" id="dsaTabs"><button class="active" data-dsa="merkle">Merkle tree</button><button data-dsa="bloom">Bloom filter</button><button data-dsa="rbtree">Red-black tree</button><button data-dsa="trie">Trie</button><button data-dsa="shamir">Shamir</button><button data-dsa="ring">Hash ring</button><button data-dsa="chain">Hash chain</button><button data-dsa="hmac">HMAC tree</button></div>
+          <div class="dsa-layout"><article class="card dsa-canvas"><div class="card-kicker"><span id="dsaName">Merkle tree · audit integrity</span><b class="chip success">Interactive</b></div><div class="tree-visual" id="dsaVisual"></div></article><article class="card dsa-info"><span>Purpose</span><h3 id="dsaTitle">Tamper-evident audit log</h3><p id="dsaDescription">Pairs event hashes into a binary tree. Any change to a stored audit event produces a different root fingerprint.</p><div class="code-output" id="dsaOutput">Ready — press “Run demonstration”.</div></article></div>
+        </section>
+
+        <section class="view" id="view-security" data-title="Security audit">
+          <div class="section-head"><div><p>Tamper-evident local event chain</p><h2>Audit & integrity</h2></div><div class="button-row"><button class="secondary-btn" id="exportAuditBtn">Export report</button><button class="primary-btn" id="verifyAuditBtn">Verify integrity</button></div></div>
+          <div class="integrity-banner card"><span class="integrity-icon">✓</span><div><small>Merkle audit root</small><strong id="merkleRoot">Calculating…</strong><p id="integrityStatus">All recorded blocks are linked and awaiting verification.</p></div><b class="chip success" id="integrityChip">Intact</b></div>
+          <div class="card table-card"><div class="card-title"><div><span>Audit trail</span><p>Timestamped and hash-linked security events</p></div></div><div class="data-table" id="auditTable"></div></div>
+        </section>
+
+        <section class="view" id="view-encryption" data-title="Encryption">
+          <div class="section-head"><div><p>Layered paper protection</p><h2>Encryption vault</h2></div><button class="primary-btn" id="encryptDemoBtn">Run encryption demo</button></div>
+          <div class="encryption-stack">
+            <article class="encryption-card active"><span>01</span><div><small>Data layer</small><strong>AES-256-GCM</strong><p>Authenticated symmetric encryption protects the serialized paper payload.</p></div><b>Ready</b></article>
+            <article class="encryption-card"><span>02</span><div><small>Key layer</small><strong>RSA-OAEP key wrap</strong><p>The one-time AES key is wrapped with the public authority key.</p></div><b>Standby</b></article>
+            <article class="encryption-card"><span>03</span><div><small>Authority layer</small><strong>Shamir 3-of-5 shares</strong><p>Recovery material is distributed across five trusted authorities.</p></div><b>Standby</b></article>
+            <article class="encryption-card"><span>04</span><div><small>Release layer</small><strong>Operational time lock</strong><p>Client policy permits decryption only inside the configured exam window.</p></div><b>Standby</b></article>
+          </div>
+          <div class="card crypto-console"><div class="card-title"><div><span>Cryptographic operation log</span><p>Uses the browser's built-in Web Crypto engine where available</p></div></div><pre id="cryptoLog">Vault initialized. No paper payload has been encrypted in this session.</pre></div>
+        </section>
+
+        <section class="view" id="view-unlock" data-title="Exam unlock">
+          <div class="unlock-wrap"><article class="card unlock-card"><span class="unlock-emblem">NF</span><p>Controlled exam-center access</p><h2>Unlock paper vault</h2><small>Enter the master passphrase. Three failed attempts trigger the 24-hour protection protocol.</small><label><span>Master passphrase</span><input type="password" id="unlockPassphrase" placeholder="Enter secure passphrase" autocomplete="off"></label><button class="primary-btn full" id="unlockBtn">Authenticate & unlock</button><div class="attempts" id="attemptIndicators"><i class="available"></i><i class="available"></i><i class="available"></i><span>3 attempts remaining</span></div><div class="trust-note"><b>Protected locally</b><p>Your passphrase is never transmitted or hardcoded.</p></div></article></div>
+        </section>
+
+        <section class="view" id="view-shadow" data-title="Shadow paper">
+          <div class="section-head"><div><p>Emergency continuity system</p><h2>Shadow paper protocol</h2></div><b class="chip neutral" id="shadowHeaderState">Dormant</b></div>
+          <article class="shadow-hero card" id="shadowHero"><div class="ghost-mark"><span>NF</span><i></i></div><div><small>Emergency backup state</small><h3 id="shadowState">Dormant</h3><p id="shadowDescription">A sealed backup paper exists in a separate logical pool. It has not been warmed or exposed to the primary workflow.</p><div class="shadow-steps"><span class="active">Dormant</span><i></i><span>Standby</span><i></i><span>Deployed</span></div></div></article>
+          <div class="shadow-grid"><article class="card"><div class="card-title"><div><span>Deployment controls</span><p>God-Mode authorization is required</p></div></div><button class="secondary-btn full" id="warmShadowBtn">Move to standby</button><button class="danger-btn full" id="deployShadowBtn">Deploy shadow paper</button></article><article class="card"><div class="card-title"><div><span>Isolation policy</span><p>Actions on confirmed compromise</p></div></div><ul class="policy-list"><li>Revoke primary-paper access</li><li>Generate forensic evidence package</li><li>Quarantine associated identities</li><li>Notify registered exam centers</li></ul></article></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="setupModal" hidden>
+    <div class="modal setup-modal"><span class="modal-mark">NF</span><p>First-run security setup</p><h2>Initialize NEET Fortress</h2><small>Create a local master passphrase for the admin vault, exam unlock and emergency recovery. It remains on this device.</small><label><span>Master passphrase</span><input type="password" id="setupPassphrase" minlength="4" placeholder="Minimum 4 characters"></label><label><span>Confirm passphrase</span><input type="password" id="setupConfirm" minlength="4" placeholder="Repeat passphrase"></label><button class="primary-btn full" id="initializeBtn">Initialize secure workspace</button><p class="fineprint">Prototype notice: browser-only controls demonstrate operational workflows; real national-exam security also requires hardened servers, audited custody procedures and independent cryptographic review.</p></div>
+  </div>
+
+  <div class="modal-backdrop" id="submissionModal" hidden>
+    <form class="modal form-modal" id="questionForm"><div class="modal-head"><div><p>Teacher portal</p><h2>Submit a question</h2></div><button type="button" class="close-modal" aria-label="Close">×</button></div><div class="form-grid"><label><span>Teacher name</span><input name="teacher" required placeholder="Dr. Ananya Rao"></label><label><span>Subject</span><select name="subject" required><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select></label><label><span>Chapter</span><input name="chapter" required placeholder="Current electricity"></label><label><span>Difficulty</span><select name="difficulty"><option value="1">1 · Foundation</option><option value="2">2 · Easy</option><option value="3" selected>3 · Moderate</option><option value="4">4 · Hard</option><option value="5">5 · Advanced</option></select></label></div><label><span>Question stem</span><textarea name="text" required rows="4" placeholder="Enter scientifically complete question…"></textarea></label><label><span>Correct answer</span><input name="answer" required placeholder="Correct option text"></label><button class="primary-btn full" type="submit">Run quality gate & submit</button></form>
+  </div>
+
+  <div class="modal-backdrop" id="godMode" hidden>
+    <div class="modal god-modal"><div class="god-head"><span>GOD MODE</span><button class="close-modal" aria-label="Close">×</button></div><div id="godAuth"><p>Restricted recovery surface</p><h2>Authority verification</h2><small>Enter the master passphrase to open emergency controls. Sessions expire automatically.</small><input type="password" id="godPassphrase" placeholder="Master passphrase"><button class="danger-btn full" id="godLogin">Enter God Mode</button></div><div id="godControls" hidden><p>Emergency authority console</p><h2>Recovery controls</h2><div class="god-grid"><button data-god="shadow"><span>SP</span><strong>Deploy shadow</strong><small>Replace compromised primary</small></button><button data-god="reencrypt"><span>RE</span><strong>Force re-encrypt</strong><small>Rotate all paper keys</small></button><button data-god="audit"><span>AR</span><strong>Export audit</strong><small>Package forensic evidence</small></button><button data-god="unlock"><span>EU</span><strong>Emergency unlock</strong><small>Clear active lockdown</small></button><button data-god="ban"><span>B4</span><strong>Nuclear ban</strong><small>Quarantine compromised ID</small></button><button data-god="lockdown"><span>NL</span><strong>Nuclear lockdown</strong><small>Stop all local operations</small></button></div></div></div>
+  </div>
+
+  <div class="lockdown-overlay" id="lockdownOverlay" hidden><div class="alarm-ring">!</div><p>Protection protocol active</p><h2>System locked</h2><strong id="lockdownTimer">23:59:59</strong><small id="lockdownReason">Multiple authentication failures detected. All paper operations are suspended.</small><div class="recovery-row"><input type="password" id="recoveryKey" placeholder="Admin recovery key"><button id="recoveryBtn">Recover</button></div><a href="hack_test.html" target="_blank">Open safe attack simulator ↗</a></div>
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script src="questions.js"></script>
+  <script src="dsa.js"></script>
+  <script src="morph.js"></script>
+  <script src="engine.js"></script>
+  <script src="security.js"></script>
+  <script src="ai.js"></script>
+  <script src="portal.js"></script>
+  <script src="godmode.js"></script>
+  <script src="lockdown.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
