@@ -4,7 +4,7 @@ export default function Home() {
       <iframe
         src="/fortress/index.html"
         title="NEET Fortress v4 examination security command center"
-        allow="clipboard-write"
+        allow="camera; microphone; clipboard-write"
       />
       <noscript>
         <p>NEET Fortress requires JavaScript for its offline operational simulations.</p>

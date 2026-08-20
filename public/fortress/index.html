@@ -22,16 +22,17 @@
         <button class="nav-btn" data-view="papers"><span class="nav-icon">04</span><span class="nav-label">Paper sets</span><i class="live-dot"></i></button>
         <button class="nav-btn" data-view="morph"><span class="nav-icon">05</span><span class="nav-label">Morphing lab</span></button>
         <button class="nav-btn" data-view="sentinel"><span class="nav-icon">06</span><span class="nav-label">AI Sentinel</span></button>
-        <button class="nav-btn" data-view="dsa"><span class="nav-icon">07</span><span class="nav-label">DSA visualizer</span></button>
+        <button class="nav-btn" data-view="monitor"><span class="nav-icon">07</span><span class="nav-label">Access monitor</span><b id="monitorNavState">Off</b></button>
+        <button class="nav-btn" data-view="dsa"><span class="nav-icon">08</span><span class="nav-label">DSA visualizer</span></button>
         <div class="nav-separator"></div>
-        <button class="nav-btn" data-view="security"><span class="nav-icon">08</span><span class="nav-label">Security audit</span></button>
-        <button class="nav-btn" data-view="encryption"><span class="nav-icon">09</span><span class="nav-label">Encryption</span></button>
-        <button class="nav-btn" data-view="unlock"><span class="nav-icon">10</span><span class="nav-label">Exam unlock</span></button>
-        <button class="nav-btn" data-view="shadow"><span class="nav-icon">11</span><span class="nav-label">Shadow paper</span></button>
+        <button class="nav-btn" data-view="security"><span class="nav-icon">09</span><span class="nav-label">Security audit</span></button>
+        <button class="nav-btn" data-view="encryption"><span class="nav-icon">10</span><span class="nav-label">Encryption</span></button>
+        <button class="nav-btn" data-view="unlock"><span class="nav-icon">11</span><span class="nav-label">Exam unlock</span></button>
+        <button class="nav-btn" data-view="shadow"><span class="nav-icon">12</span><span class="nav-label">Shadow paper</span></button>
       </nav>
       <div class="sidebar-foot">
         <div class="system-pill"><i></i><div><strong>All systems nominal</strong><span>7/7 layers active</span></div></div>
-        <button class="operator"><span>SA</span><div><strong>Security Authority</strong><small>Central command</small></div><b>•••</b></button>
+        <button class="operator" id="operatorProfile"><span id="operatorInitials">SA</span><div><strong id="operatorName">Security Authority</strong><small>Central command</small></div><b>•••</b></button>
       </div>
     </aside>
 
@@ -41,13 +42,17 @@
         <div><p>National examination security grid</p><h1 id="viewTitle">Command center</h1></div>
         <div class="top-actions">
           <button class="icon-button" id="themeToggle" aria-label="Toggle theme">◐</button>
-          <button class="status-button"><i></i> Live monitoring</button>
+          <button class="status-button" id="monitorStatusButton"><i></i><span>Monitoring off</span></button>
           <button class="icon-button notification" id="notificationBtn" aria-label="Notifications">•<span id="alertCount">2</span></button>
         </div>
       </header>
 
       <div class="view-stack">
         <section class="view active" id="view-command" data-title="Command center">
+          <article class="admin-briefing card">
+            <div class="admin-briefing-copy"><span class="eyebrow" id="adminTimeGreeting">Good morning</span><h2>Welcome back, <span id="adminBriefingName">Security Authority</span></h2><p>Your command grid is stable. Local access monitoring remains under your control and activates only with permission.</p></div>
+            <div class="briefing-actions"><button class="secondary-btn" data-go="monitor">Review access monitor</button><button class="primary-btn" id="openAssistantBriefing">Ask Fortress AI</button></div>
+          </article>
           <div class="hero-grid">
             <article class="card countdown-panel">
               <div class="card-kicker"><span>Exam window</span><b class="chip success">Secure</b></div>
@@ -125,6 +130,23 @@
           <div class="card table-card"><div class="card-title"><div><span>Threat event history</span><p>Locally recorded access and anomaly signals</p></div></div><div class="data-table" id="sentinelTable"></div></div>
         </section>
 
+        <section class="view" id="view-monitor" data-title="Access monitor">
+          <div class="section-head"><div><p>Private on-device environmental analysis</p><h2>Camera & microphone monitor</h2></div><div class="button-row"><button class="secondary-btn" id="stopMonitorBtn" disabled>Stop monitoring</button><button class="primary-btn" id="startMonitorBtn">Enable with permission</button></div></div>
+          <article class="privacy-banner card"><span>◎</span><div><strong>Consent-first, local analysis</strong><p>Your browser will ask before the camera or microphone is used. Frames and audio samples are analyzed in memory only—they are not recorded, stored, uploaded, or used for identity recognition.</p></div><b class="chip neutral" id="monitorPrivacyState">No media access</b></article>
+          <div class="monitor-grid">
+            <article class="card monitor-preview-card">
+              <div class="card-title"><div><span>Live environment</span><p>Visual motion and ambient-light signals</p></div><b class="chip neutral" id="cameraState">Camera off</b></div>
+              <div class="monitor-preview" id="monitorPreview"><video id="monitorVideo" muted playsinline></video><canvas id="monitorCanvas" width="96" height="54" hidden></canvas><div class="monitor-placeholder" id="monitorPlaceholder"><span>CAM</span><strong>Camera is inactive</strong><p>Enable monitoring to begin local analysis.</p></div><div class="monitor-scanline"></div></div>
+              <div class="monitor-readouts"><div><span>Motion</span><strong id="motionValue">0%</strong><i><b id="motionBar"></b></i></div><div><span>Ambient light</span><strong id="lightValue">0%</strong><i><b id="lightBar"></b></i></div><div><span>Sound level</span><strong id="soundValue">0%</strong><i><b id="soundBar"></b></i></div></div>
+            </article>
+            <div class="monitor-side">
+              <article class="card monitor-status-card"><div class="card-title"><div><span>Analysis state</span><p>Current browser-side signals</p></div><b class="chip neutral" id="analysisState">Standby</b></div><div class="signal-list"><div><span>Camera permission</span><strong id="cameraPermission">Not requested</strong></div><div><span>Microphone permission</span><strong id="micPermission">Not requested</strong></div><div><span>Environment state</span><strong id="presenceState">Unknown</strong></div><div><span>Media destination</span><strong class="green">This device only</strong></div></div></article>
+              <article class="card monitor-events-card"><div class="card-title"><div><span>Monitoring events</span><p>Session-only environmental notices</p></div><button class="text-btn" id="clearMonitorEvents">Clear</button></div><div class="monitor-event-list" id="monitorEventList"><div class="monitor-empty"><strong>No monitoring events</strong><p>Start monitoring to see permission and signal activity.</p></div></div></article>
+            </div>
+          </div>
+          <p class="monitor-disclaimer">This prototype can observe changes in light, motion, and sound. It cannot reliably identify a person, prove misconduct, or replace trained invigilators and audited proctoring systems.</p>
+        </section>
+
         <section class="view" id="view-dsa" data-title="DSA visualizer">
           <div class="section-head"><div><p>Eight defensive data structures</p><h2>Algorithm laboratory</h2></div><button class="secondary-btn" id="runDsaDemo">Run demonstration</button></div>
           <div class="dsa-tabs" id="dsaTabs"><button class="active" data-dsa="merkle">Merkle tree</button><button data-dsa="bloom">Bloom filter</button><button data-dsa="rbtree">Red-black tree</button><button data-dsa="trie">Trie</button><button data-dsa="shamir">Shamir</button><button data-dsa="ring">Hash ring</button><button data-dsa="chain">Hash chain</button><button data-dsa="hmac">HMAC tree</button></div>
@@ -162,8 +184,21 @@
   </div>
 
   <div class="modal-backdrop" id="setupModal" hidden>
-    <div class="modal setup-modal"><span class="modal-mark">NF</span><p>First-run security setup</p><h2>Initialize NEET Fortress</h2><small>Create a local master passphrase for the admin vault, exam unlock and emergency recovery. It remains on this device.</small><label><span>Master passphrase</span><input type="password" id="setupPassphrase" minlength="4" placeholder="Minimum 4 characters"></label><label><span>Confirm passphrase</span><input type="password" id="setupConfirm" minlength="4" placeholder="Repeat passphrase"></label><button class="primary-btn full" id="initializeBtn">Initialize secure workspace</button><p class="fineprint">Prototype notice: browser-only controls demonstrate operational workflows; real national-exam security also requires hardened servers, audited custody procedures and independent cryptographic review.</p></div>
+    <div class="modal setup-modal"><span class="modal-mark">NF</span><p>First-run security setup</p><h2>Initialize NEET Fortress</h2><small>Create your local administrator profile and master passphrase. These details remain on this device.</small><label><span>Administrator name</span><input type="text" id="setupAdminName" maxlength="48" value="Security Authority" placeholder="Security Authority"></label><label><span>Master passphrase</span><input type="password" id="setupPassphrase" minlength="4" placeholder="Minimum 4 characters"></label><label><span>Confirm passphrase</span><input type="password" id="setupConfirm" minlength="4" placeholder="Repeat passphrase"></label><button class="primary-btn full" id="initializeBtn">Initialize secure workspace</button><p class="fineprint">Prototype notice: browser-only controls demonstrate operational workflows; real national-exam security also requires hardened servers, audited custody procedures and independent cryptographic review.</p></div>
   </div>
+
+  <section class="welcome-screen" id="adminWelcome" hidden aria-modal="true" role="dialog">
+    <div class="welcome-orb welcome-orb-one"></div><div class="welcome-orb welcome-orb-two"></div>
+    <div class="welcome-shell">
+      <div class="welcome-brand"><span>NF</span><div><strong>NEET Fortress</strong><small>Administrator access</small></div></div>
+      <div class="welcome-content"><p id="welcomeTimeGreeting">Good morning</p><h1>Welcome, <span id="welcomeAdminName">Security Authority</span>.</h1><small id="welcomeDate">Thursday, 20 August 2026</small><p class="welcome-summary">The command grid is ready. Review the briefing below, then enter the administrator workspace.</p>
+        <div class="welcome-status-grid"><div><span>System posture</span><strong><i></i> Nominal</strong></div><div><span>Defense layers</span><strong>7 / 7 active</strong></div><div><span>Access monitoring</span><strong id="welcomeMonitorState">Off by default</strong></div></div>
+        <div class="welcome-monitor-consent"><span>◎</span><div><strong>Optional local monitoring</strong><p>Camera and microphone access is never automatic. Enable it only if you consent to local motion, light, and sound analysis.</p></div><button class="secondary-btn" id="welcomeEnableMonitor">Enable monitoring</button></div>
+        <button class="primary-btn welcome-enter" id="enterCommandCenter">Enter command center →</button>
+      </div>
+      <p class="welcome-foot">Media is never recorded or uploaded · Identity recognition is not used</p>
+    </div>
+  </section>
 
   <div class="modal-backdrop" id="submissionModal" hidden>
     <form class="modal form-modal" id="questionForm"><div class="modal-head"><div><p>Teacher portal</p><h2>Submit a question</h2></div><button type="button" class="close-modal" aria-label="Close">×</button></div><div class="form-grid"><label><span>Teacher name</span><input name="teacher" required placeholder="Dr. Ananya Rao"></label><label><span>Subject</span><select name="subject" required><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select></label><label><span>Chapter</span><input name="chapter" required placeholder="Current electricity"></label><label><span>Difficulty</span><select name="difficulty"><option value="1">1 · Foundation</option><option value="2">2 · Easy</option><option value="3" selected>3 · Moderate</option><option value="4">4 · Hard</option><option value="5">5 · Advanced</option></select></label></div><label><span>Question stem</span><textarea name="text" required rows="4" placeholder="Enter scientifically complete question…"></textarea></label><label><span>Correct answer</span><input name="answer" required placeholder="Correct option text"></label><button class="primary-btn full" type="submit">Run quality gate & submit</button></form>
@@ -176,6 +211,14 @@
   <div class="lockdown-overlay" id="lockdownOverlay" hidden><div class="alarm-ring">!</div><p>Protection protocol active</p><h2>System locked</h2><strong id="lockdownTimer">23:59:59</strong><small id="lockdownReason">Multiple authentication failures detected. All paper operations are suspended.</small><div class="recovery-row"><input type="password" id="recoveryKey" placeholder="Admin recovery key"><button id="recoveryBtn">Recover</button></div><a href="hack_test.html" target="_blank">Open safe attack simulator ↗</a></div>
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
+  <button class="assistant-launcher" id="assistantLauncher" aria-label="Open Fortress AI assistant" aria-expanded="false"><span>AI</span><i></i></button>
+  <aside class="assistant-panel" id="assistantPanel" hidden aria-label="Fortress AI assistant">
+    <header><div class="assistant-mark">AI</div><div><strong>Fortress AI</strong><span><i></i> Local assistant · offline</span></div><button id="assistantClose" aria-label="Close assistant">×</button></header>
+    <div class="assistant-messages" id="assistantMessages" aria-live="polite"></div>
+    <div class="assistant-prompts" id="assistantPrompts"><button>System status</button><button>Monitoring privacy</button><button>Threat summary</button><button>What can you do?</button></div>
+    <form class="assistant-form" id="assistantForm"><label><input id="assistantInput" autocomplete="off" maxlength="240" placeholder="Ask about this command center…"><button type="submit" aria-label="Send message">↑</button></label><small>Local guidance only. No messages leave this device.</small></form>
+  </aside>
+
   <script src="questions.js"></script>
   <script src="dsa.js"></script>
   <script src="morph.js"></script>
@@ -185,6 +228,8 @@
   <script src="portal.js"></script>
   <script src="godmode.js"></script>
   <script src="lockdown.js"></script>
+  <script src="monitoring.js"></script>
+  <script src="assistant.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

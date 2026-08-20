@@ -20,6 +20,7 @@ test("server-renders the NEET Fortress host and social metadata", async () => {
   const html = await response.text();
   assert.match(html, /<title>NEET Fortress v4 — Examination Security OS<\/title>/i);
   assert.match(html, /<iframe src="\/fortress\/index\.html"/i);
+  assert.match(html, /allow="camera; microphone; clipboard-write"/i);
   assert.match(html, /property="og:image" content="http:\/\/localhost(?::3000)?\/og\.png"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
@@ -28,7 +29,8 @@ test("ships the complete offline module surface", async () => {
   const root = new URL("../public/fortress/", import.meta.url);
   const required = [
     "index.html", "styles.css", "app.js", "questions.js", "dsa.js", "morph.js",
-    "engine.js", "security.js", "ai.js", "portal.js", "godmode.js", "lockdown.js", "hack_test.html",
+    "engine.js", "security.js", "ai.js", "portal.js", "godmode.js", "lockdown.js",
+    "monitoring.js", "assistant.js", "hack_test.html",
   ];
   const files = await readdir(root);
   for (const name of required) assert.ok(files.includes(name), `${name} is required`);
@@ -38,6 +40,10 @@ test("ships the complete offline module surface", async () => {
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
   assert.match(index, /data-view="shadow"/);
+  assert.match(index, /data-view="monitor"/);
+  assert.match(index, /id="adminWelcome"/);
+  assert.match(index, /id="assistantPanel"/);
+  assert.match(index, /not recorded, stored, uploaded/i);
   assert.match(index, /hack_test\.html/);
   assert.match(app, /new HyperShuffler/);
   assert.match(app, /new LockdownGuard/);

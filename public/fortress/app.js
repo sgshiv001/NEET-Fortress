@@ -24,11 +24,44 @@
   const shuffler = new HyperShuffler(wizer.papers);
   const god = new GodMode(security);
   const guard = new LockdownGuard(sentinel, security);
+  const monitor = new LocalAccessMonitor();
+  state.monitorEvents = [];
+  const adminName = () => localStorage.getItem("nf4_admin_name") || "Security Authority";
+  const assistant = new FortressAssistant(() => ({
+    adminName: adminName(), threat: sentinel.threat, monitoring: monitor.running,
+    paperCount: wizer.papers.length, questionCount: QuestionBank.questions.length,
+    auditCount: security.audit.length, shadowState: god.shadow.state
+  }));
 
   function toast(title, message, type = "success", timeout = 3600) {
     const el = document.createElement("div"); el.className = `toast ${type}`;
     el.innerHTML = `<i></i><div><strong>${esc(title)}</strong><p>${esc(message)}</p></div>`;
     $("#toastStack").appendChild(el); setTimeout(() => el.remove(), timeout);
+  }
+
+  function dayGreeting() {
+    const hour = new Date().getHours();
+    return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  }
+
+  function renderAdminIdentity() {
+    const name = adminName();
+    const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase() || "SA";
+    $("#operatorName").textContent = name;
+    $("#operatorInitials").textContent = initials;
+    $("#adminBriefingName").textContent = name;
+    $("#adminTimeGreeting").textContent = dayGreeting();
+    $("#welcomeAdminName").textContent = name;
+    $("#welcomeTimeGreeting").textContent = dayGreeting();
+    $("#welcomeDate").textContent = new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+
+  function showAdminWelcome() {
+    renderAdminIdentity();
+    $("#welcomeMonitorState").textContent = monitor.running ? "Active on this device" : "Off by default";
+    $("#welcomeEnableMonitor").textContent = monitor.running ? "Monitoring active" : "Enable monitoring";
+    $("#welcomeEnableMonitor").disabled = monitor.running;
+    $("#adminWelcome").hidden = false;
   }
 
   function openModal(id) { $(id).hidden = false; const input = $("input", $(id)); setTimeout(() => input?.focus(), 50); }
@@ -42,6 +75,7 @@
     $("#sidebar").classList.remove("open"); window.scrollTo({ top: 0, behavior: "smooth" });
     if (view === "security") renderAudit();
     if (view === "sentinel") renderSentinel();
+    if (view === "monitor") renderMonitorEvents();
     if (view === "shadow") renderShadow();
   }
 
@@ -52,6 +86,7 @@
     $("#collapseBtn").addEventListener("click", () => { $("#appShell").classList.toggle("collapsed"); localStorage.setItem("nf4_collapsed", $("#appShell").classList.contains("collapsed") ? "1" : "0"); });
     if (localStorage.getItem("nf4_collapsed") === "1") $("#appShell").classList.add("collapsed");
     $("#notificationBtn").addEventListener("click", () => toast("2 advisory notices", "Final assembly is approaching. Audit verification is due in 18 minutes.", "success", 5200));
+    $("#monitorStatusButton").addEventListener("click", () => navigate("monitor"));
   }
 
   function bindTheme() {
@@ -175,6 +210,116 @@
     sentinel.addEventListener("threat", renderSentinel);
   }
 
+  function setMonitorUi(stateName, detail = {}) {
+    const active = stateName === "active";
+    const requesting = stateName === "requesting";
+    $("#startMonitorBtn").disabled = active || requesting;
+    $("#stopMonitorBtn").disabled = !active;
+    $("#monitorPreview").classList.toggle("live", active);
+    $("#cameraState").className = `chip ${active ? "success" : stateName === "denied" ? "danger" : "neutral"}`;
+    $("#cameraState").textContent = active ? "Camera active" : stateName === "denied" ? "Access denied" : requesting ? "Requesting" : "Camera off";
+    $("#analysisState").className = `chip ${active ? "success" : stateName === "denied" ? "danger" : "neutral"}`;
+    $("#analysisState").textContent = active ? "Analyzing locally" : stateName === "denied" ? "Permission denied" : requesting ? "Awaiting permission" : "Standby";
+    $("#monitorPrivacyState").className = `chip ${active ? "success" : "neutral"}`;
+    $("#monitorPrivacyState").textContent = active ? "Local analysis active" : "No media access";
+    $("#monitorNavState").textContent = active ? "On" : "Off";
+    $("#monitorStatusButton span").textContent = active ? "Monitoring active" : "Monitoring off";
+    $("#monitorStatusButton").classList.toggle("active", active);
+    $("#cameraPermission").textContent = active ? "Granted for session" : stateName === "denied" ? "Denied" : requesting ? "Awaiting response" : "Not requested";
+    $("#micPermission").textContent = active ? (detail.audio ? "Granted for session" : "Unavailable") : stateName === "denied" ? "Denied" : requesting ? "Awaiting response" : "Not requested";
+    $("#welcomeMonitorState").textContent = active ? "Active on this device" : "Off by default";
+    $("#welcomeEnableMonitor").textContent = active ? "Monitoring active" : "Enable monitoring";
+    $("#welcomeEnableMonitor").disabled = active || requesting;
+    if (!active) updateMonitorMetrics({ motion: 0, light: 0, sound: 0, environment: "Unknown" });
+  }
+
+  function updateMonitorMetrics(metrics) {
+    [["motion", metrics.motion], ["light", metrics.light], ["sound", metrics.sound]].forEach(([key, value]) => {
+      const safe = Math.max(0, Math.min(100, Math.round(value || 0)));
+      $(`#${key}Value`).textContent = `${safe}%`;
+      $(`#${key}Bar`).style.width = `${safe}%`;
+    });
+    $("#presenceState").textContent = metrics.environment || "Unknown";
+  }
+
+  function renderMonitorEvents() {
+    const root = $("#monitorEventList");
+    if (!state.monitorEvents.length) {
+      root.innerHTML = `<div class="monitor-empty"><strong>No monitoring events</strong><p>Start monitoring to see permission and signal activity.</p></div>`;
+      return;
+    }
+    root.innerHTML = state.monitorEvents.slice(0, 18).map(event => `<div class="monitor-event ${event.score >= 25 ? "warning" : ""}"><i></i><div><strong>${esc(event.kind.replaceAll("_", " "))}</strong><p>${esc(event.message)}</p></div><time>${formatTime(event.at)}</time></div>`).join("");
+  }
+
+  async function startMonitoring() {
+    try {
+      await monitor.start($("#monitorVideo"), $("#monitorCanvas"));
+      await security.log("LOCAL_MONITOR_ENABLED", "Administrator enabled consent-based camera and microphone analysis", "secure");
+      renderActivity();
+      toast("Local monitoring enabled", "Motion, light and sound are being analyzed in memory on this device.");
+      return true;
+    } catch (error) {
+      toast("Monitoring was not enabled", `${error.message} You can continue using every other part of the workspace.`, "error", 5600);
+      return false;
+    }
+  }
+
+  function stopMonitoring() {
+    monitor.stop();
+    security.log("LOCAL_MONITOR_DISABLED", "Administrator stopped local camera and microphone analysis", "info");
+    toast("Local monitoring stopped", "Camera and microphone tracks were released.");
+  }
+
+  function bindMonitoring() {
+    setMonitorUi("stopped");
+    $("#startMonitorBtn").addEventListener("click", startMonitoring);
+    $("#stopMonitorBtn").addEventListener("click", stopMonitoring);
+    $("#clearMonitorEvents").addEventListener("click", () => { state.monitorEvents = []; renderMonitorEvents(); });
+    monitor.addEventListener("metrics", event => updateMonitorMetrics(event.detail));
+    monitor.addEventListener("state", event => setMonitorUi(event.detail.state, event.detail));
+    monitor.addEventListener("notice", async event => {
+      state.monitorEvents.unshift(event.detail);
+      state.monitorEvents = state.monitorEvents.slice(0, 30);
+      renderMonitorEvents();
+      if (event.detail.score > 0) {
+        sentinel.add("environment_signal", { source: "local-monitor", velocity: Math.round(event.detail.score / 12) });
+        await security.log("MONITOR_SIGNAL", event.detail.message, event.detail.score >= 30 ? "warning" : "info");
+      }
+    });
+    globalThis.addEventListener("beforeunload", () => monitor.stop());
+  }
+
+  function assistantMessage(text, role = "assistant") {
+    const message = document.createElement("div");
+    message.className = `assistant-message ${role}`;
+    message.innerHTML = `${esc(text)}<time>${formatTime(Date.now())}</time>`;
+    $("#assistantMessages").appendChild(message);
+    $("#assistantMessages").scrollTop = $("#assistantMessages").scrollHeight;
+  }
+
+  function openAssistant() {
+    $("#assistantPanel").hidden = false;
+    $("#assistantLauncher").setAttribute("aria-expanded", "true");
+    if (!$("#assistantMessages").children.length) assistantMessage(assistant.greeting(adminName()));
+    setTimeout(() => $("#assistantInput").focus(), 60);
+  }
+
+  function askAssistant(text) {
+    const query = String(text || "").trim();
+    if (!query) return;
+    assistantMessage(query, "user");
+    setTimeout(() => assistantMessage(assistant.answer(query)), 180);
+  }
+
+  function bindAssistant() {
+    $("#assistantLauncher").addEventListener("click", openAssistant);
+    $("#openAssistantBriefing").addEventListener("click", openAssistant);
+    $("#assistantClose").addEventListener("click", () => { $("#assistantPanel").hidden = true; $("#assistantLauncher").setAttribute("aria-expanded", "false"); });
+    $("#assistantForm").addEventListener("submit", event => { event.preventDefault(); askAssistant($("#assistantInput").value); $("#assistantInput").value = ""; });
+    $$("#assistantPrompts button").forEach(button => button.addEventListener("click", () => askAssistant(button.textContent)));
+    document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("#assistantPanel").hidden) $("#assistantClose").click(); });
+  }
+
   const dsaCopy = {
     merkle: ["Merkle tree · audit integrity", "Tamper-evident audit log", "Pairs event hashes into a binary tree. Any change to a stored audit event produces a different root fingerprint."],
     bloom: ["Bloom filter · duplicate detection", "Fast probabilistic lookup", "Uses several hash positions to reject definitely-new question text without scanning the full vault."],
@@ -280,14 +425,22 @@
   function bindModals() { $$(".close-modal").forEach(btn => btn.addEventListener("click", () => closeModal(btn))); $$(".modal-backdrop").forEach(backdrop => backdrop.addEventListener("click", e => { if (e.target === backdrop && backdrop.id !== "setupModal") backdrop.hidden = true; })); }
   function bindSetup() {
     if (!localStorage.getItem("nf4_master")) openModal("#setupModal");
-    $("#initializeBtn").addEventListener("click", async () => { const pass = $("#setupPassphrase").value, confirm = $("#setupConfirm").value; if (pass.length < 4) return toast("Passphrase too short", "Use at least four characters for this local prototype.", "error"); if (pass !== confirm) return toast("Passphrases do not match", "Re-enter the same master passphrase in both fields.", "error"); localStorage.setItem("nf4_master", pass); $("#setupModal").hidden = true; await security.log("AUTHORITY_INITIALIZED", "Local master authority configured", "secure"); toast("Secure workspace initialized", "Admin recovery, vault unlock and God Mode are now configured."); });
+    $("#initializeBtn").addEventListener("click", async () => { const pass = $("#setupPassphrase").value, confirm = $("#setupConfirm").value, name = $("#setupAdminName").value.trim() || "Security Authority"; if (pass.length < 4) return toast("Passphrase too short", "Use at least four characters for this local prototype.", "error"); if (pass !== confirm) return toast("Passphrases do not match", "Re-enter the same master passphrase in both fields.", "error"); localStorage.setItem("nf4_master", pass); localStorage.setItem("nf4_admin_name", name); $("#setupModal").hidden = true; renderAdminIdentity(); await security.log("AUTHORITY_INITIALIZED", "Local master authority configured", "secure"); toast("Secure workspace initialized", "Admin recovery, vault unlock and God Mode are now configured."); showAdminWelcome(); });
+  }
+
+  function bindAdminWelcome() {
+    renderAdminIdentity();
+    $("#operatorProfile").addEventListener("click", showAdminWelcome);
+    $("#enterCommandCenter").addEventListener("click", () => { sessionStorage.setItem("nf4_welcomed", "1"); $("#adminWelcome").hidden = true; });
+    $("#welcomeEnableMonitor").addEventListener("click", startMonitoring);
+    if (localStorage.getItem("nf4_master") && !sessionStorage.getItem("nf4_welcomed")) showAdminWelcome();
   }
 
   async function initialize() {
-    bindNavigation(); bindTheme(); bindQuestions(); bindPortal(); bindPapers(); bindMorph(); bindSentinel(); bindDsa(); bindSecurity(); bindEncryption(); bindUnlock(); bindShadow(); bindLockdown(); bindGodMode(); bindModals(); bindSetup();
+    bindNavigation(); bindTheme(); bindQuestions(); bindPortal(); bindPapers(); bindMorph(); bindSentinel(); bindMonitoring(); bindAssistant(); bindDsa(); bindSecurity(); bindEncryption(); bindUnlock(); bindShadow(); bindLockdown(); bindGodMode(); bindModals(); bindSetup(); bindAdminWelcome();
     renderQuestionStats(); renderQuestions(); renderPortal(); renderPapers(); pickMorphQuestion(); renderSentinel(); renderShadow(); await ensureAuditSeed();
     navigate(state.currentView); updateCountdown(); setInterval(updateCountdown, 1000); shuffler.start();
-    globalThis.fortress = { security, sentinel, professor, portal, wizer, shuffler, god, guard, state };
+    globalThis.fortress = { security, sentinel, professor, portal, wizer, shuffler, god, guard, monitor, assistant, state };
   }
 
   document.addEventListener("DOMContentLoaded", initialize);

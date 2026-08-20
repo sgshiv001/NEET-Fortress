@@ -20,7 +20,7 @@ context.window = context;
 context.globalThis = context;
 vm.createContext(context);
 
-for (const file of ["questions.js", "dsa.js", "morph.js", "engine.js"]) {
+for (const file of ["questions.js", "dsa.js", "morph.js", "engine.js", "assistant.js", "monitoring.js"]) {
   vm.runInContext(fs.readFileSync(new URL(`../public/fortress/${file}`, import.meta.url), "utf8"), context, { filename: file });
 }
 
@@ -53,4 +53,17 @@ test("morphing preserves a valid answer index", () => {
     assert.ok(result.validity >= 70);
     assert.ok(result.question.answer >= 0 && result.question.answer < result.question.options.length);
   }
+});
+
+test("offline assistant explains monitoring privacy from local context", () => {
+  const assistant = new context.FortressAssistant(() => ({ adminName: "Admin", monitoring: false, threat: 8 }));
+  const answer = assistant.answer("Does camera monitoring record or upload me?");
+  assert.match(answer, /starts only after you press Enable/i);
+  assert.match(answer, /not recorded, uploaded/i);
+});
+
+test("local access monitor starts in a private inactive state", () => {
+  const monitor = new context.LocalAccessMonitor();
+  assert.equal(monitor.running, false);
+  assert.deepEqual(Object.keys(monitor.metrics), ["motion", "light", "sound", "environment"]);
 });
