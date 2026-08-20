@@ -58,7 +58,8 @@ test("morphing preserves a valid answer index", () => {
 test("offline assistant explains monitoring privacy from local context", () => {
   const assistant = new context.FortressAssistant(() => ({ adminName: "Admin", monitoring: false, threat: 8 }));
   const answer = assistant.answer("Does camera monitoring record or upload me?");
-  assert.match(answer, /starts only after you press Enable/i);
+  assert.match(answer, /permission is required at administrator entry/i);
+  assert.match(answer, /command center remains locked/i);
   assert.match(answer, /not recorded, uploaded/i);
 });
 

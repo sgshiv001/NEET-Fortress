@@ -26,6 +26,8 @@
   const guard = new LockdownGuard(sentinel, security);
   const monitor = new LocalAccessMonitor();
   state.monitorEvents = [];
+  state.monitorWasActive = false;
+  state.permissionRequestAttempted = false;
   const adminName = () => localStorage.getItem("nf4_admin_name") || "Security Authority";
   const assistant = new FortressAssistant(() => ({
     adminName: adminName(), threat: sentinel.threat, monitoring: monitor.running,
@@ -56,12 +58,54 @@
     $("#welcomeDate").textContent = new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   }
 
-  function showAdminWelcome() {
-    renderAdminIdentity();
-    $("#welcomeMonitorState").textContent = monitor.running ? "Active on this device" : "Off by default";
-    $("#welcomeEnableMonitor").textContent = monitor.running ? "Monitoring active" : "Enable monitoring";
-    $("#welcomeEnableMonitor").disabled = monitor.running;
+  function showPermissionGate() {
+    $("#adminWelcome").classList.remove("access-blocked");
+    $("#welcomePermissionGate").hidden = false;
+    $("#permissionReady").hidden = true;
+    $("#permissionBlocked").hidden = true;
+    $("#enterCommandCenter").hidden = true;
+    $("#enterCommandCenter").disabled = true;
+    $("#welcomeMonitorState").textContent = "Permission required";
+    $("#welcomeEnableMonitor").textContent = "Allow access";
+    $("#welcomeEnableMonitor").disabled = false;
+  }
+
+  function blockWebsite(reason) {
     $("#adminWelcome").hidden = false;
+    $("#adminWelcome").classList.add("access-blocked");
+    $("#welcomePermissionGate").hidden = true;
+    $("#permissionReady").hidden = true;
+    $("#permissionBlocked").hidden = false;
+    $("#enterCommandCenter").hidden = true;
+    $("#enterCommandCenter").disabled = true;
+    $("#welcomeMonitorState").textContent = "Access blocked";
+    $("#blockedReason").textContent = reason || "Camera or microphone permission was denied. Both permissions are required to use this administrator workspace.";
+    $("#appShell").inert = true;
+    $("#assistantPanel").hidden = true;
+    $("#assistantLauncher").hidden = true;
+    document.body.classList.add("access-gated");
+  }
+
+  function showAdminWelcome(requestPermission = true) {
+    renderAdminIdentity();
+    $("#appShell").inert = true;
+    $("#assistantLauncher").hidden = true;
+    document.body.classList.add("access-gated");
+    $("#adminWelcome").hidden = false;
+    if (monitor.running) {
+      $("#welcomePermissionGate").hidden = true;
+      $("#permissionBlocked").hidden = true;
+      $("#permissionReady").hidden = false;
+      $("#enterCommandCenter").hidden = false;
+      $("#enterCommandCenter").disabled = false;
+      $("#welcomeMonitorState").textContent = "Active on this device";
+      return;
+    }
+    showPermissionGate();
+    if (requestPermission && !state.permissionRequestAttempted) {
+      state.permissionRequestAttempted = true;
+      setTimeout(startMonitoring, 250);
+    }
   }
 
   function openModal(id) { $(id).hidden = false; const input = $("input", $(id)); setTimeout(() => input?.focus(), 50); }
@@ -213,6 +257,7 @@
   function setMonitorUi(stateName, detail = {}) {
     const active = stateName === "active";
     const requesting = stateName === "requesting";
+    if (active) state.monitorWasActive = true;
     $("#startMonitorBtn").disabled = active || requesting;
     $("#stopMonitorBtn").disabled = !active;
     $("#monitorPreview").classList.toggle("live", active);
@@ -227,9 +272,28 @@
     $("#monitorStatusButton").classList.toggle("active", active);
     $("#cameraPermission").textContent = active ? "Granted for session" : stateName === "denied" ? "Denied" : requesting ? "Awaiting response" : "Not requested";
     $("#micPermission").textContent = active ? (detail.audio ? "Granted for session" : "Unavailable") : stateName === "denied" ? "Denied" : requesting ? "Awaiting response" : "Not requested";
-    $("#welcomeMonitorState").textContent = active ? "Active on this device" : "Off by default";
-    $("#welcomeEnableMonitor").textContent = active ? "Monitoring active" : "Enable monitoring";
+    $("#welcomeMonitorState").textContent = active ? "Active on this device" : stateName === "denied" ? "Access blocked" : requesting ? "Awaiting permission" : "Permission required";
+    $("#welcomeEnableMonitor").textContent = active ? "Access granted" : requesting ? "Waiting for permission…" : "Allow access";
     $("#welcomeEnableMonitor").disabled = active || requesting;
+    if (requesting) {
+      $("#adminWelcome").hidden = false;
+      $("#welcomePermissionGate").hidden = false;
+      $("#permissionBlocked").hidden = true;
+      $("#permissionReady").hidden = true;
+    }
+    if (active) {
+      $("#adminWelcome").classList.remove("access-blocked");
+      $("#welcomePermissionGate").hidden = true;
+      $("#permissionBlocked").hidden = true;
+      $("#permissionReady").hidden = false;
+      $("#enterCommandCenter").hidden = false;
+      $("#enterCommandCenter").disabled = false;
+    }
+    if (stateName === "denied") blockWebsite(detail.error || "Camera or microphone permission was denied. Both permissions are required to use this administrator workspace.");
+    if (stateName === "stopped" && state.monitorWasActive) {
+      state.monitorWasActive = false;
+      blockWebsite(detail.message || "Camera or microphone monitoring stopped. Restore both permissions to continue.");
+    }
     if (!active) updateMonitorMetrics({ motion: 0, light: 0, sound: 0, environment: "Unknown" });
   }
 
@@ -259,7 +323,8 @@
       toast("Local monitoring enabled", "Motion, light and sound are being analyzed in memory on this device.");
       return true;
     } catch (error) {
-      toast("Monitoring was not enabled", `${error.message} You can continue using every other part of the workspace.`, "error", 5600);
+      blockWebsite(`${error.message} Camera and microphone access is required for this protected workspace.`);
+      toast("Website access blocked", "Allow camera and microphone permissions to continue.", "error", 5600);
       return false;
     }
   }
@@ -267,7 +332,7 @@
   function stopMonitoring() {
     monitor.stop();
     security.log("LOCAL_MONITOR_DISABLED", "Administrator stopped local camera and microphone analysis", "info");
-    toast("Local monitoring stopped", "Camera and microphone tracks were released.");
+    toast("Website access blocked", "Camera and microphone monitoring must remain active.", "error");
   }
 
   function bindMonitoring() {
@@ -430,10 +495,17 @@
 
   function bindAdminWelcome() {
     renderAdminIdentity();
-    $("#operatorProfile").addEventListener("click", showAdminWelcome);
-    $("#enterCommandCenter").addEventListener("click", () => { sessionStorage.setItem("nf4_welcomed", "1"); $("#adminWelcome").hidden = true; });
+    $("#operatorProfile").addEventListener("click", () => showAdminWelcome(false));
+    $("#enterCommandCenter").addEventListener("click", () => {
+      if (!monitor.running) return blockWebsite("Camera and microphone monitoring is not active. Both permissions are required to enter.");
+      $("#adminWelcome").hidden = true;
+      $("#appShell").inert = false;
+      $("#assistantLauncher").hidden = false;
+      document.body.classList.remove("access-gated");
+    });
     $("#welcomeEnableMonitor").addEventListener("click", startMonitoring);
-    if (localStorage.getItem("nf4_master") && !sessionStorage.getItem("nf4_welcomed")) showAdminWelcome();
+    $("#retryMonitorPermission").addEventListener("click", () => { showPermissionGate(); startMonitoring(); });
+    if (localStorage.getItem("nf4_master")) showAdminWelcome(true);
   }
 
   async function initialize() {

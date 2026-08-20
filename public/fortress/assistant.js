@@ -21,7 +21,7 @@
       if (!query) return "Ask a question and I’ll help you navigate the command center.";
       if (/hello|hi\b|hey|good (morning|afternoon|evening)/.test(query)) return this.greeting(context.adminName);
       if (/privacy|record|upload|camera|microphone|mic|monitor/.test(query)) {
-        return `Access monitoring is ${monitor}. It starts only after you press Enable and approve the browser permission prompt. Camera frames and audio samples are processed in memory for motion, light, and sound levels; they are not recorded, uploaded, or used to identify anyone.`;
+        return `Access monitoring is ${monitor}. Camera and microphone permission is required at administrator entry; if either permission is denied, the command center remains locked. Frames and audio samples are processed in memory for motion, light, and sound levels; they are not recorded, uploaded, or used to identify anyone.`;
       }
       if (/threat|risk|sentinel|alert/.test(query)) {
         return `Sentinel currently reports ${threat}% threat, classified as ${threat >= 75 ? "high" : threat >= 25 ? "elevated" : "low"} risk. Open AI Sentinel for event-level signals and prioritized recommendations.`;

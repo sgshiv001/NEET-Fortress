@@ -44,6 +44,9 @@ test("ships the complete offline module surface", async () => {
   assert.match(index, /id="adminWelcome"/);
   assert.match(index, /id="assistantPanel"/);
   assert.match(index, /not recorded, stored, uploaded/i);
+  assert.match(index, /id="permissionBlocked"/);
+  assert.match(index, /Website access blocked/i);
+  assert.match(index, /command center remains locked if access is denied/i);
   assert.match(index, /hack_test\.html/);
   assert.match(app, /new HyperShuffler/);
   assert.match(app, /new LockdownGuard/);
