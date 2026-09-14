@@ -18,7 +18,7 @@ test("server-renders the NEET Fortress host and social metadata", async () => {
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<title>NEET Fortress v4 — Examination Security OS<\/title>/i);
+  assert.match(html, /<title>NEET Fortress v5 - AI Examination Security OS<\/title>/i);
   assert.match(html, /<iframe src="\/fortress\/index\.html"/i);
   assert.match(html, /allow="camera; microphone; clipboard-write"/i);
   assert.match(html, /property="og:image" content="http:\/\/localhost(?::3000)?\/og\.png"/i);
@@ -39,15 +39,17 @@ test("ships the complete offline module surface", async () => {
     readFile(new URL("app.js", root), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
-  assert.match(index, /data-view="shadow"/);
   assert.match(index, /data-view="monitor"/);
+  assert.match(index, /data-view="sentinel"/);
+  assert.match(index, /data-view="vault"/);
   assert.match(index, /id="adminWelcome"/);
   assert.match(index, /id="assistantPanel"/);
   assert.match(index, /not recorded, stored, uploaded/i);
   assert.match(index, /id="permissionBlocked"/);
   assert.match(index, /id="continueWithoutMonitoring"/);
-  assert.match(index, /automatically requests camera and microphone access/i);
+  assert.match(index, /automatically requests access/i);
   assert.match(index, /Administrators may continue/i);
+  assert.match(index, /AI-driven exam security/i);
   assert.match(index, /hack_test\.html/);
   assert.match(app, /new HyperShuffler/);
   assert.match(app, /new LockdownGuard/);

@@ -9,7 +9,7 @@
     greeting(name = "Security Authority") {
       const hour = new Date().getHours();
       const period = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-      return `${period}, ${name}. I’m Fortress AI, your private on-device guide. Ask me about system status, monitoring, threat signals, papers, questions, or audits.`;
+      return `${period}, ${name}. I’m Fortress AI for NEET Fortress v5, your private on-device guide. Ask me about system status, monitoring, threat signals, papers, questions, or audits.`;
     }
 
     answer(input) {
@@ -21,7 +21,7 @@
       if (!query) return "Ask a question and I’ll help you navigate the command center.";
       if (/hello|hi\b|hey|good (morning|afternoon|evening)/.test(query)) return this.greeting(context.adminName);
       if (/privacy|record|upload|camera|microphone|mic|monitor/.test(query)) {
-        return `Access monitoring is ${monitor}. Camera and microphone access is requested automatically in each new browser session. Administrators may continue if either permission is declined. Frames and audio samples are processed in memory for motion, light, and sound levels; they are not recorded, uploaded, or used to identify anyone.`;
+        return `Access monitoring is ${monitor}. Camera and microphone access is requested automatically in each new browser session. Administrators may continue if either permission is declined. Frames and audio samples are processed in memory for motion, light, and sound levels; they are not recorded, stored, uploaded, or used to identify anyone.`;
       }
       if (/threat|risk|sentinel|alert/.test(query)) {
         return `Sentinel currently reports ${threat}% threat, classified as ${threat >= 75 ? "high" : threat >= 25 ? "elevated" : "low"} risk. Open AI Sentinel for event-level signals and prioritized recommendations.`;
@@ -39,7 +39,7 @@
         return `System posture is nominal: 7 of 7 defense layers are active, Sentinel risk is ${threat}%, local monitoring is ${monitor}, and the shadow paper is ${String(context.shadowState || "dormant").toLowerCase()}.`;
       }
       if (/help|what can you do|commands|navigate/.test(query)) {
-        return "I can summarize system posture, explain monitoring privacy, report Sentinel risk, describe the paper and question workflows, and point you to audit, encryption, unlock, or shadow controls. I work entirely offline.";
+        return "I can summarize system posture, explain monitoring privacy, report Sentinel risk, describe the paper and question workflows, and point you to audit, unlock, or recovery controls. I work entirely offline.";
       }
       if (/encryption|aes|rsa|shamir|key/.test(query)) {
         return "The Encryption view demonstrates an AES-256-GCM payload, RSA-OAEP key wrapping, 3-of-5 Shamir recovery shares, and a controlled release policy using browser cryptography.";

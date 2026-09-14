@@ -60,7 +60,7 @@ test("offline assistant explains monitoring privacy from local context", () => {
   const answer = assistant.answer("Does camera monitoring record or upload me?");
   assert.match(answer, /requested automatically in each new browser session/i);
   assert.match(answer, /Administrators may continue/i);
-  assert.match(answer, /not recorded, uploaded/i);
+  assert.match(answer, /not recorded, stored, uploaded/i);
 });
 
 test("local access monitor starts in a private inactive state", () => {
