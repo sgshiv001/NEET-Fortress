@@ -18,10 +18,10 @@ test("server-renders the NEET Fortress host and social metadata", async () => {
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<title>NEET Fortress v5 - AI Examination Security OS<\/title>/i);
+  assert.match(html, /<title>NEET Fortress \| NEET Exam Security<\/title>/i);
   assert.match(html, /<iframe src="\/fortress\/index\.html"/i);
   assert.match(html, /allow="camera; microphone; clipboard-write"/i);
-  assert.match(html, /property="og:image" content="http:\/\/localhost(?::3000)?\/og\.png"/i);
+  assert.match(html, /property="og:image" content="http:\/\/localhost(?::3000)?\/neet-fortress-banner\.png"/i);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/i);
 });
 
@@ -30,7 +30,7 @@ test("ships the complete offline module surface", async () => {
   const required = [
     "index.html", "styles.css", "app.js", "questions.js", "dsa.js", "morph.js",
     "engine.js", "security.js", "ai.js", "portal.js", "godmode.js", "lockdown.js",
-    "monitoring.js", "assistant.js", "hack_test.html",
+    "monitoring.js", "assistant.js", "learning.js", "hack_test.html",
   ];
   const files = await readdir(root);
   for (const name of required) assert.ok(files.includes(name), `${name} is required`);
@@ -47,7 +47,11 @@ test("ships the complete offline module surface", async () => {
   assert.match(index, /not recorded, stored, uploaded/i);
   assert.match(index, /id="permissionBlocked"/);
   assert.match(index, /id="continueWithoutMonitoring"/);
-  assert.match(index, /automatically requests access/i);
+  assert.match(index, /Optional administrator feature/i);
+  assert.match(index, /id="continueToWorkspace"/);
+  assert.match(index, /data-view="student"/);
+  assert.match(index, /id="view-exam"/);
+  assert.match(index, /id="view-results"/);
   assert.match(index, /Administrators may continue/i);
   assert.match(index, /AI-driven exam security/i);
   assert.match(index, /hack_test\.html/);
@@ -55,4 +59,5 @@ test("ships the complete offline module surface", async () => {
   assert.match(app, /new LockdownGuard/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
   await access(new URL("../public/og.png", import.meta.url));
+  await access(new URL("../public/neet-fortress-banner.png", import.meta.url));
 });

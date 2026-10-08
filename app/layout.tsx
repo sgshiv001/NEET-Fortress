@@ -7,20 +7,20 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host") || "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const image = new URL("/og.png", origin).toString();
+  const image = new URL("/neet-fortress-banner.png", origin).toString();
   return {
-    title: "NEET Fortress v5 - AI Examination Security OS",
-    description: "A rebuilt AI command center for NEET examination security, browser-side access monitoring, paper generation, auditing and recovery simulation.",
+    title: "NEET Fortress | NEET Exam Security",
+    description: "An exam security prototype for protecting NEET question banks and exam papers with access monitoring, paper controls, and audit tools.",
     openGraph: {
-      title: "NEET Fortress v5",
-      description: "AI examination security with consent-based camera and microphone monitoring.",
+      title: "NEET Fortress — Protect the Paper. Preserve the Exam.",
+      description: "A prototype command center for NEET exam security and paper integrity.",
       type: "website",
-      images: [{ url: image, width: 1747, height: 909, alt: "NEET Fortress v5 - AI Examination Security OS" }],
+      images: [{ url: image, alt: "NEET Fortress — NEET exam security" }],
     },
     twitter: {
       card: "summary_large_image",
-      title: "NEET Fortress v5",
-      description: "AI examination security with consent-based camera and microphone monitoring.",
+      title: "NEET Fortress — NEET Exam Security",
+      description: "Protect the paper. Preserve the exam.",
       images: [image],
     },
   };

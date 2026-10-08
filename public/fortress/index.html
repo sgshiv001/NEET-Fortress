@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07111f">
-  <title>NEET Fortress v5 - AI Examination Security OS</title>
+  <title>NEET Fortress | NEET Exam Security</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,11 +14,11 @@
         <div class="product-mark"><span>NF</span><b>v5</b></div>
         <p class="eyebrow" id="welcomeTimeGreeting">Good evening</p>
         <h1>Welcome, <span id="welcomeAdminName">Security Authority</span>.</h1>
-        <p class="gate-summary">AI access analysis starts by asking this browser for camera and microphone permission. Administrators may continue even if media access is unavailable.</p>
+        <p class="gate-summary">Welcome to NEET Fortress. Students can start practice right away. Administrators may enable optional, local environment monitoring.</p>
         <div class="gate-stats">
           <div><span>Posture</span><strong>Nominal</strong></div>
           <div><span>Defense layers</span><strong>7 active</strong></div>
-          <div><span>Monitoring</span><strong id="welcomeMonitorState">Requesting</strong></div>
+          <div><span>Monitoring</span><strong id="welcomeMonitorState">Off</strong></div>
         </div>
       </div>
       <div class="gate-card">
@@ -27,9 +27,10 @@
           <span class="permission-icon">CAM</span>
           <div>
             <strong>Allow camera and microphone</strong>
-            <p>This website automatically requests access in every new browser session. The analysis stays on this device.</p>
+            <p>Optional administrator feature. Motion, light, and sound analysis stays in this browser session. Media is not recorded or uploaded.</p>
           </div>
           <button class="primary-btn" id="welcomeEnableMonitor">Allow access</button>
+          <button class="secondary-btn" id="continueToWorkspace">Continue to NEET Fortress</button>
         </div>
         <div id="permissionReady" class="permission-card ready" hidden>
           <span class="permission-icon">OK</span>
@@ -51,7 +52,7 @@
             <button class="primary-btn" id="continueWithoutMonitoring">Continue without monitoring</button>
           </div>
         </div>
-        <p class="gate-foot">Automatic request in every browser. Optional for administrators. Private browser-side analysis only.</p>
+        <p class="gate-foot">Monitoring is optional. Continue to practice without granting camera or microphone access.</p>
       </div>
     </div>
   </section>
@@ -60,16 +61,17 @@
     <aside class="side">
       <a class="brand" href="#command" data-view-link="command">
         <span>NF</span>
-        <div><strong>NEET Fortress</strong><small>AI Security OS</small></div>
+        <div><strong>NEET Fortress</strong><small>NEET Exam Security</small></div>
       </a>
       <nav class="nav" aria-label="Main">
-        <button class="active" data-view="command">Command</button>
-        <button data-view="monitor">Access monitor</button>
-        <button data-view="vault">Question vault</button>
-        <button data-view="papers">Paper AI</button>
+        <button class="active" data-view="command">NEET PaperGuard</button>
+        <button data-view="student">Student hub</button>
+        <button data-view="monitor">PaperGuard</button>
+        <button data-view="vault">QuestionVault</button>
+        <button data-view="papers">PaperShield</button>
         <button data-view="sentinel">Sentinel</button>
         <button data-view="audit">Audit</button>
-        <button data-view="unlock">Admin</button>
+        <button data-view="unlock">NEET Lock</button>
       </nav>
       <div class="side-card">
         <span id="sideMonitorDot"></span>
@@ -90,7 +92,7 @@
         </div>
       </header>
 
-      <section class="view active" id="view-command" data-title="Command">
+      <section class="view active" id="view-command" data-title="NEET PaperGuard">
         <div class="command-hero">
           <div>
             <p class="eyebrow">Administrator command surface</p>
@@ -126,9 +128,54 @@
         </div>
       </section>
 
-      <section class="view" id="view-monitor" data-title="Access Monitor">
+      <section class="view" id="view-student" data-title="Student hub">
         <div class="section-heading">
-          <div><p>Consent-first environmental AI</p><h2>Camera and microphone analysis</h2></div>
+          <div><p>Practice, review, improve</p><h2 id="studentGreeting">Your NEET practice desk</h2></div>
+          <label class="student-name-field"><span>Your name</span><input id="studentName" maxlength="48" placeholder="Enter your name"></label>
+        </div>
+        <div class="student-launch-grid">
+          <article class="student-launch-card">
+            <span class="eyebrow">Full mock exam</span><h3>180 questions · 3 hours</h3>
+            <p>45 questions in each subject. +4 for correct, −1 for incorrect, 0 if unanswered.</p>
+            <button class="primary-btn" id="startMockExam">Start full mock</button>
+          </article>
+          <article class="student-launch-card">
+            <span class="eyebrow">Focused practice</span><h3>20 questions · 30 minutes</h3>
+            <p>Choose a subject and get a short, timed practice set with answer explanations after submission.</p>
+            <div class="practice-controls"><select id="practiceSubject" aria-label="Practice subject"><option value="All">All subjects</option><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select><button class="secondary-btn" id="startPractice">Start practice</button></div>
+          </article>
+        </div>
+        <p class="sample-bank-note">The included questions are generated demo content. Import a reviewed NEET question bank before relying on practice scores.</p>
+        <article class="panel student-history-panel">
+          <div class="panel-head"><div><span>Your progress</span><h3>Recent attempts</h3></div><button class="text-btn" id="clearStudentHistory">Clear history</button></div>
+          <div class="student-history" id="studentHistory"></div>
+        </article>
+      </section>
+
+      <section class="view exam-view" id="view-exam" data-title="Exam in progress">
+        <header class="exam-topbar"><div><p id="examModeLabel">FULL MOCK EXAM</p><h2 id="examSubjectTitle">NEET Practice</h2></div><div class="exam-clock" id="examTimer" role="timer">03:00:00</div><button class="primary-btn" id="submitExamTop">Submit exam</button></header>
+        <div class="exam-progress"><span id="examProgressText">Question 1 of 180</span><div><i id="examProgressBar"></i></div><span id="examAnsweredText">0 answered</span></div>
+        <div class="exam-layout">
+          <article class="exam-question-panel">
+            <div class="exam-question-meta"><span id="examQuestionSubject">PHYSICS</span><span id="examQuestionChapter">Chapter</span><span id="examQuestionNumber">Question 1</span></div>
+            <h3 id="examQuestionText"></h3>
+            <div class="exam-options" id="examOptions"></div>
+            <div class="exam-controls"><button class="secondary-btn" id="examPrevious">Previous</button><button class="text-btn" id="examClearAnswer">Clear response</button><button class="secondary-btn" id="examMarkReview">Mark for review</button><button class="primary-btn" id="examNext">Save & next</button></div>
+          </article>
+          <aside class="exam-palette-panel"><div class="panel-head"><div><span>Question palette</span><h3>Navigate</h3></div></div><div class="exam-legend"><span>Answered</span><span>Review</span><span>Unanswered</span></div><div class="exam-palette" id="examPalette"></div><button class="primary-btn full" id="submitExamBottom">Submit exam</button></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-results" data-title="Exam results">
+        <div class="section-heading"><div><p id="resultModeLabel">Attempt complete</p><h2>Your result</h2></div><button class="primary-btn" id="backToStudent">Back to student hub</button></div>
+        <div id="resultSummary" class="result-summary"></div>
+        <article class="panel"><div class="panel-head"><div><span>Subject breakdown</span><h3>How you did</h3></div></div><div id="resultSubjects" class="result-subjects"></div></article>
+        <article class="panel result-review-panel"><div class="panel-head"><div><span>Review</span><h3>Questions and correct answers</h3></div><select id="reviewFilter" aria-label="Filter questions"><option value="all">All questions</option><option value="incorrect">Incorrect</option><option value="unanswered">Unanswered</option></select></div><div id="resultReview" class="result-review"></div></article>
+      </section>
+
+      <section class="view" id="view-monitor" data-title="PaperGuard">
+        <div class="section-heading">
+          <div><p>Optional, consent-first access signals</p><h2>PaperGuard monitoring</h2></div>
           <div class="button-row"><button class="secondary-btn" id="stopMonitorBtn" disabled>Stop</button><button class="primary-btn" id="startMonitorBtn">Enable monitoring</button></div>
         </div>
         <div class="monitor-layout">
@@ -153,16 +200,29 @@
         </div>
       </section>
 
-      <section class="view" id="view-vault" data-title="Question Vault">
+      <section class="view" id="view-vault" data-title="QuestionVault">
         <div class="section-heading">
-          <div><p>AI-ranked master repository</p><h2>924 protected questions</h2></div>
+          <div><p>Question bank</p><h2 id="vaultHeading">Question repository</h2></div>
           <label class="search-box"><span>Search</span><input id="questionSearch" placeholder="Search chapter, subject, or question"></label>
         </div>
+        <details class="question-editor"><summary>Add a question or import a JSON bank</summary>
+          <form id="questionEditorForm" class="question-editor-form">
+            <label>Subject<select id="newQuestionSubject"><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select></label>
+            <label>Chapter<input id="newQuestionChapter" required maxlength="100" placeholder="e.g. Laws of Motion"></label>
+            <label class="wide">Question<input id="newQuestionText" required maxlength="1000" placeholder="Write the question"></label>
+            <label class="wide">Explanation (optional)<input id="newQuestionExplanation" maxlength="1000" placeholder="Why is this the correct answer?"></label>
+            <label>Option A<input id="newOption0" required maxlength="300"></label><label>Option B<input id="newOption1" required maxlength="300"></label>
+            <label>Option C<input id="newOption2" required maxlength="300"></label><label>Option D<input id="newOption3" required maxlength="300"></label>
+            <label>Correct option<select id="newQuestionAnswer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+            <label>Difficulty<select id="newQuestionDifficulty"><option value="1">1 · Introductory</option><option value="2">2</option><option value="3" selected>3 · Standard</option><option value="4">4</option><option value="5">5 · Advanced</option></select></label>
+            <div class="editor-actions"><button class="primary-btn" type="submit">Add to question bank</button><button class="secondary-btn" type="button" id="exportQuestions">Export bank JSON</button><label class="secondary-btn import-label">Import JSON<input id="importQuestions" type="file" accept="application/json,.json" hidden></label></div>
+          </form>
+        </details>
         <div class="subject-grid" id="subjectStats"></div>
         <div class="question-list" id="questionList"></div>
       </section>
 
-      <section class="view" id="view-papers" data-title="Paper AI">
+      <section class="view" id="view-papers" data-title="PaperShield">
         <div class="section-heading">
           <div><p>Adaptive assembly engine</p><h2>100-paper AI shuffler</h2></div>
           <div class="button-row"><button class="secondary-btn" id="toggleShuffler">Pause</button><button class="primary-btn" id="generatePapersBtn">Regenerate</button></div>
@@ -194,7 +254,7 @@
         <div class="audit-table" id="auditTable"></div>
       </section>
 
-      <section class="view" id="view-unlock" data-title="Admin">
+      <section class="view" id="view-unlock" data-title="NEET Lock">
         <div class="admin-panel">
           <div>
             <p class="eyebrow">Local administrator setup</p>
@@ -235,6 +295,7 @@
   <script src="lockdown.js"></script>
   <script src="monitoring.js"></script>
   <script src="assistant.js"></script>
+  <script src="learning.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

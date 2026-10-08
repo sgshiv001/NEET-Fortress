@@ -5,6 +5,7 @@
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   const time = value => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  NEETLearning.attach(QuestionBank);
 
   const state = {
     view: "command",
@@ -12,6 +13,9 @@
     permissionAttempted: false,
     shuffling: true,
     tick: 0,
+    attempt: null,
+    resultAttempt: null,
+    timer: null,
   };
 
   const security = new SecurityCore();
@@ -170,7 +174,7 @@
 
   async function seedAudit() {
     if (security.audit.length) return;
-    await security.log("AI_OS_REBUILT", "NEET Fortress v5 interface initialized", "secure");
+    await security.log("AI_OS_REBUILT", "NEET Fortress exam security dashboard initialized", "secure");
     await security.log("QUESTION_VAULT_READY", `${QuestionBank.questions.length} questions loaded into the protected vault`, "secure");
     await security.log("PAPER_AI_READY", `${wizer.papers.length} paper candidates generated`, "info");
     await security.log("SENTINEL_READY", "Local anomaly model standing by", "secure");
@@ -186,6 +190,7 @@
 
   function renderQuestionStats() {
     $("#bankMetric").textContent = QuestionBank.questions.length;
+    $("#vaultHeading").textContent = `${QuestionBank.questions.length} questions`;
     $("#subjectStats").innerHTML = QuestionBank.stats().map(item => `<article><span>${esc(item.subject)}</span><strong>${item.count}</strong><small>${item.averageQuality}% average AI quality</small></article>`).join("");
   }
 
@@ -317,6 +322,143 @@
     if (view === "audit") renderAudit();
     if (view === "sentinel") renderSentinel();
     if (view === "monitor") renderMonitorEvents();
+    if (view === "student") renderStudentHub();
+  }
+
+  function renderStudentHub() {
+    const name = NEETLearning.studentName();
+    $("#studentName").value = name;
+    $("#studentGreeting").textContent = name ? `Ready to study, ${name}?` : "Your NEET practice desk";
+    const current = NEETLearning.current();
+    const active = current?.status === "in_progress";
+    $("#startMockExam").textContent = active ? "Resume current exam" : "Start full mock";
+    $("#startPractice").textContent = active ? "Resume current exam" : "Start practice";
+    const history = NEETLearning.history();
+    $("#studentHistory").innerHTML = `${active ? `<div class="history-resume"><span><strong>Exam in progress</strong><p>${current.mode === "mock" ? "Full mock" : `${esc(current.subject)} practice`} · ${current.questions.length} questions</p></span><button class="primary-btn" id="resumeExam">Resume</button></div>` : ""}${history.length ? history.slice(0, 8).map((item, i) => `<button class="history-row" data-history-index="${i}"><span><strong>${item.mode === "mock" ? "Full mock exam" : `${esc(item.subject)} practice`}</strong><small>${new Date(item.result?.completedAt || item.startedAt).toLocaleString()}</small></span><b>${item.result?.score ?? 0}<small> / ${item.result?.maxScore ?? 0}</small></b></button>`).join("") : `<p class="empty-state">No completed attempts yet. Start a practice set to see your progress here.</p>`}`;
+    const resume = $("#resumeExam");
+    if (resume) resume.addEventListener("click", resumeExam);
+    $$("[data-history-index]").forEach(button => button.addEventListener("click", () => {
+      const item = NEETLearning.history()[Number(button.dataset.historyIndex)];
+      if (item) showResults(item);
+    }));
+  }
+
+  function beginExam(mode, subject = "All") {
+    try {
+      const existing = NEETLearning.current();
+      state.attempt = existing?.status === "in_progress" ? existing : NEETLearning.start(mode, subject);
+      renderExam();
+      navigate("exam");
+      if (state.timer) clearInterval(state.timer);
+      state.timer = setInterval(updateExamTimer, 1000);
+      updateExamTimer();
+    } catch (error) { toast("Could not start exam", error.message); }
+  }
+
+  function resumeExam() { beginExam("mock"); }
+
+  function renderExam() {
+    const attempt = state.attempt;
+    if (!attempt) return;
+    const index = Math.max(0, Math.min(attempt.currentIndex, attempt.questions.length - 1));
+    attempt.currentIndex = index;
+    const question = attempt.questions[index];
+    $("#examModeLabel").textContent = attempt.mode === "mock" ? "FULL MOCK EXAM" : "FOCUSED PRACTICE";
+    $("#examSubjectTitle").textContent = attempt.mode === "mock" ? "NEET Full Mock" : `${attempt.subject} Practice`;
+    $("#examQuestionSubject").textContent = question.subject.toUpperCase();
+    $("#examQuestionChapter").textContent = question.chapter;
+    $("#examQuestionNumber").textContent = `Question ${index + 1}`;
+    $("#examQuestionText").textContent = question.text;
+    $("#examOptions").innerHTML = question.options.map((option, optionIndex) => `<button class="exam-option${Number(attempt.answers[index]) === optionIndex ? " selected" : ""}" data-option="${optionIndex}"><span>${String.fromCharCode(65 + optionIndex)}</span>${esc(option)}</button>`).join("");
+    $("#examProgressText").textContent = `Question ${index + 1} of ${attempt.questions.length}`;
+    $("#examAnsweredText").textContent = `${Object.keys(attempt.answers).length} answered`;
+    $("#examProgressBar").style.width = `${Object.keys(attempt.answers).length / attempt.questions.length * 100}%`;
+    $("#examPrevious").disabled = index === 0;
+    $("#examNext").textContent = index === attempt.questions.length - 1 ? "Finish review" : "Save & next";
+    $("#examMarkReview").classList.toggle("marked", attempt.marked.includes(index));
+    $("#examPalette").innerHTML = attempt.questions.map((_, i) => `<button class="palette-question${attempt.answers[i] !== undefined ? " answered" : ""}${attempt.marked.includes(i) ? " review" : ""}${i === index ? " current" : ""}" data-question-index="${i}" aria-label="Question ${i + 1}">${i + 1}</button>`).join("");
+    NEETLearning.update(attempt);
+  }
+
+  function updateExamTimer() {
+    if (!state.attempt) return;
+    const remaining = Math.max(0, state.attempt.expiresAt - Date.now());
+    const seconds = Math.ceil(remaining / 1000);
+    $("#examTimer").textContent = `${String(Math.floor(seconds / 3600)).padStart(2, "0")}:${String(Math.floor(seconds % 3600 / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+    $("#examTimer").classList.toggle("urgent", remaining < 5 * 60 * 1000);
+    if (remaining <= 0) submitExam(true);
+  }
+
+  function submitExam(auto = false) {
+    if (!state.attempt) return;
+    const unanswered = state.attempt.questions.length - Object.keys(state.attempt.answers).length;
+    if (!auto && !confirm(`Submit this exam? ${unanswered} question${unanswered === 1 ? " is" : "s are"} unanswered.`)) return;
+    if (state.timer) clearInterval(state.timer);
+    const completed = NEETLearning.finish(state.attempt);
+    state.attempt = null;
+    showResults(completed);
+    toast(auto ? "Time is up" : "Exam submitted", `You scored ${completed.result.score} out of ${completed.result.maxScore}.`);
+  }
+
+  function showResults(attempt) {
+    state.resultAttempt = attempt;
+    const result = attempt.result || NEETLearning.score(attempt);
+    $("#resultModeLabel").textContent = `${attempt.mode === "mock" ? "Full mock" : `${esc(attempt.subject)} practice`} · ${new Date(result.completedAt || attempt.startedAt).toLocaleString()}`;
+    $("#resultSummary").innerHTML = `<article><span>Score</span><strong>${result.score}<small> / ${result.maxScore}</small></strong></article><article><span>Correct</span><strong>${result.correct}</strong></article><article><span>Incorrect</span><strong>${result.incorrect}</strong></article><article><span>Unanswered</span><strong>${result.unanswered}</strong></article><article><span>Accuracy</span><strong>${result.accuracy}%</strong></article>`;
+    $("#resultSubjects").innerHTML = result.subjects.filter(row => row.total).map(row => `<div class="result-subject-row"><span><strong>${row.subject}</strong><small>${row.correct} right · ${row.incorrect} wrong · ${row.unanswered} blank</small></span><b>${row.score} <small>/ ${row.total * 4}</small></b></div>`).join("");
+    renderResultReview();
+    navigate("results");
+  }
+
+  function renderResultReview() {
+    const attempt = state.resultAttempt;
+    if (!attempt) return;
+    const filter = $("#reviewFilter").value;
+    const rows = attempt.questions.map((q, index) => ({ q, index, chosen: attempt.answers[index] })).filter(({ q, chosen }) => {
+      if (filter === "incorrect") return chosen !== undefined && Number(chosen) !== q.answer;
+      if (filter === "unanswered") return chosen === undefined;
+      return true;
+    });
+    $("#resultReview").innerHTML = rows.map(({ q, index, chosen }) => {
+      const correct = chosen !== undefined && Number(chosen) === q.answer;
+      const label = chosen === undefined ? "Unanswered" : correct ? "Correct" : "Incorrect";
+      return `<article class="review-question ${chosen === undefined ? "unanswered" : correct ? "correct" : "incorrect"}"><div class="review-heading"><strong>Q${index + 1} · ${esc(q.subject)} · ${esc(q.chapter)}</strong><span>${label}</span></div><p>${esc(q.text)}</p><p>Your answer: ${chosen === undefined ? "No answer" : esc(q.options[Number(chosen)])} · Correct: ${esc(q.options[q.answer])}</p><small>${esc(q.explanation || "Review this concept in your notes.")}</small></article>`;
+    }).join("") || `<p class="empty-state">No questions match this filter.</p>`;
+  }
+
+  function addQuestion(event) {
+    event.preventDefault();
+    const question = {
+      subject: $("#newQuestionSubject").value, chapter: $("#newQuestionChapter").value.trim(), text: $("#newQuestionText").value.trim(),
+      explanation: $("#newQuestionExplanation").value.trim(), options: [0, 1, 2, 3].map(index => $(`#newOption${index}`).value.trim()), answer: Number($("#newQuestionAnswer").value), difficulty: Number($("#newQuestionDifficulty").value), bloom: "Understand",
+    };
+    try {
+      const saved = NEETLearning.saveCustom(question);
+      QuestionBank.questions.push(saved);
+      wizer.generateSet(100);
+      renderQuestionStats(); renderQuestions(); renderPapers();
+      event.currentTarget.reset();
+      toast("Question added", "It is available in practice sets and future papers on this browser.");
+    } catch (error) { toast("Question not added", error.message); }
+  }
+
+  async function importQuestionBank(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const count = NEETLearning.importQuestions(JSON.parse(await file.text()));
+      NEETLearning.attach({ questions: QuestionBank.questions });
+      wizer.generateSet(100);
+      renderQuestionStats(); renderQuestions(); renderPapers();
+      toast("Question bank imported", `${count} questions added to this browser.`);
+    } catch (error) { toast("Import failed", error.message || "Could not read this JSON file."); }
+    finally { event.target.value = ""; }
+  }
+
+  function exportQuestions() {
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ questions: QuestionBank.questions }, null, 2)], { type: "application/json" }));
+    const anchor = Object.assign(document.createElement("a"), { href: url, download: "neet-question-bank.json" });
+    anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function openAssistant() {
@@ -349,11 +491,46 @@
     $("#welcomeEnableMonitor").addEventListener("click", () => startMonitoring(true));
     $("#retryMonitorPermission").addEventListener("click", () => { resetGate(); startMonitoring(true); });
     $("#continueWithoutMonitoring").addEventListener("click", enterWorkspace);
+    $("#continueToWorkspace").addEventListener("click", enterWorkspace);
     $("#enterCommandCenter").addEventListener("click", enterWorkspace);
     $("#startMonitorBtn").addEventListener("click", () => startMonitoring(false));
     $("#stopMonitorBtn").addEventListener("click", stopMonitoring);
     $("#clearMonitorEvents").addEventListener("click", () => { state.monitorEvents = []; renderMonitorEvents(); });
     $("#questionSearch").addEventListener("input", renderQuestions);
+    $("#startMockExam").addEventListener("click", () => beginExam("mock"));
+    $("#startPractice").addEventListener("click", () => beginExam("practice", $("#practiceSubject").value));
+    $("#studentName").addEventListener("change", event => { NEETLearning.setStudentName(event.target.value); renderStudentHub(); });
+    $("#clearStudentHistory").addEventListener("click", () => {
+      if (!NEETLearning.history().length || !confirm("Clear all completed attempts from this browser?")) return;
+      NEETLearning.clearHistory(); renderStudentHub(); toast("Progress cleared", "Completed exam history was removed from this browser.");
+    });
+    $("#examOptions").addEventListener("click", event => {
+      const button = event.target.closest("[data-option]");
+      if (!button || !state.attempt) return;
+      state.attempt.answers[state.attempt.currentIndex] = Number(button.dataset.option);
+      renderExam();
+    });
+    $("#examPalette").addEventListener("click", event => {
+      const button = event.target.closest("[data-question-index]");
+      if (!button || !state.attempt) return;
+      state.attempt.currentIndex = Number(button.dataset.questionIndex); renderExam();
+    });
+    $("#examPrevious").addEventListener("click", () => { if (state.attempt && state.attempt.currentIndex > 0) { state.attempt.currentIndex -= 1; renderExam(); } });
+    $("#examNext").addEventListener("click", () => { if (state.attempt) { state.attempt.currentIndex = Math.min(state.attempt.questions.length - 1, state.attempt.currentIndex + 1); renderExam(); } });
+    $("#examClearAnswer").addEventListener("click", () => { if (state.attempt) { delete state.attempt.answers[state.attempt.currentIndex]; renderExam(); } });
+    $("#examMarkReview").addEventListener("click", () => {
+      if (!state.attempt) return;
+      const marked = new Set(state.attempt.marked);
+      marked.has(state.attempt.currentIndex) ? marked.delete(state.attempt.currentIndex) : marked.add(state.attempt.currentIndex);
+      state.attempt.marked = [...marked]; renderExam();
+    });
+    $("#submitExamTop").addEventListener("click", () => submitExam());
+    $("#submitExamBottom").addEventListener("click", () => submitExam());
+    $("#backToStudent").addEventListener("click", () => navigate("student"));
+    $("#reviewFilter").addEventListener("change", renderResultReview);
+    $("#questionEditorForm").addEventListener("submit", addQuestion);
+    $("#importQuestions").addEventListener("change", importQuestionBank);
+    $("#exportQuestions").addEventListener("click", exportQuestions);
     $("#generatePapersBtn").addEventListener("click", async () => { wizer.generateSet(100); await security.log("PAPER_SET_REGENERATED", "Paper AI regenerated the candidate pool", "info"); renderPapers(); renderActivity(); toast("Paper set regenerated", "100 new candidates are ready for review."); });
     $("#toggleShuffler").addEventListener("click", event => { state.shuffling = !state.shuffling; event.currentTarget.textContent = state.shuffling ? "Pause" : "Resume"; });
     $("#runSentinelSweep").addEventListener("click", manualSweep);
@@ -388,6 +565,7 @@
     await seedAudit();
     renderQuestionStats();
     renderQuestions();
+    renderStudentHub();
     renderPapers();
     renderSentinel();
     renderActivity();
@@ -395,7 +573,7 @@
     updateMonitorUi();
     setInterval(updateShuffle, 1000);
     shuffler.start();
-    showGreeting(true);
+    showGreeting(false);
     globalThis.fortress = { security, sentinel, professor, portal, wizer, shuffler, god, guard, monitor, assistant, state };
   }
 
