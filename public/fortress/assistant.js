@@ -6,10 +6,10 @@
       this.getContext = getContext;
     }
 
-    greeting(name = "Security Authority") {
+    greeting(name) {
       const hour = new Date().getHours();
       const period = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-      return `${period}, ${name}. I’m Fortress AI, your NEET Fortress guide. Ask me about system status, monitoring, threat signals, papers, questions, or audits.`;
+      return `${period}${name ? `, ${name}` : ""}. I’m the Exam Fortress assistant. Ask about monitoring, risk signals, exam setup, question banks, or audits.`;
     }
 
     answer(input) {
@@ -19,35 +19,29 @@
       const monitor = context.monitoring ? "active" : "off";
 
       if (!query) return "Ask a question and I’ll help you navigate the command center.";
-      if (/hello|hi\b|hey|good (morning|afternoon|evening)/.test(query)) return this.greeting(context.adminName);
+      if (/\b(hello|hi|hey|good (morning|afternoon|evening))\b/.test(query)) return this.greeting(context.name);
       if (/privacy|record|upload|camera|microphone|mic|monitor/.test(query)) {
-        return `Access monitoring is ${monitor}. It is optional and starts only when an administrator chooses Allow access. Students can use practice and exams without camera or microphone permission. When enabled, frames and audio samples are processed in memory for motion, light, and sound levels; they are not recorded, stored, uploaded, or used to identify anyone.`;
+        return `Access monitoring is ${monitor}. It starts when a staff user chooses Enable monitoring and grants browser permission. Candidates can take exams without granting camera or microphone access. Frames and audio samples are analyzed for motion, light, and sound in memory. Media is not recorded, stored, or uploaded.`;
       }
       if (/threat|risk|sentinel|alert/.test(query)) {
-        return `Sentinel currently reports ${threat}% threat, classified as ${threat >= 75 ? "high" : threat >= 25 ? "elevated" : "low"} risk. Open AI Sentinel for event-level signals and prioritized recommendations.`;
+        return `The simulated risk score is ${threat}%. Open Risk signals to review the inputs and suggested actions.`;
       }
       if (/paper|shuffle|assembly|exam/.test(query)) {
-        return `${context.paperCount || 100} candidate papers are available to the hyper-shuffler. Open Paper sets to review entropy, regenerate the set, or assemble the highest-quality final candidate.`;
+        return `${context.paperCount || 0} variants have been generated for the current session. Open Exam setup to configure an assessment and generate randomized paper variants.`;
       }
       if (/question|vault|bank|teacher|submission/.test(query)) {
-        return `The question vault contains ${context.questionCount || 924} balanced items. Use Question bank to search and filter, or Teacher portal to submit, review, and approve new material.`;
+        return `The organization bank contains ${context.questionCount || 0} questions. Open Question bank to add questions or import a JSON file.`;
       }
       if (/audit|integrity|merkle|security log/.test(query)) {
         return `The local audit chain contains ${context.auditCount || 0} events. Open Security audit to verify the Merkle root or export a forensic JSON report.`;
       }
       if (/status|overview|summary|brief/.test(query)) {
-        return `System posture is nominal: 7 of 7 defense layers are active, Sentinel risk is ${threat}%, local monitoring is ${monitor}, and the shadow paper is ${String(context.shadowState || "dormant").toLowerCase()}.`;
+        return `Local monitoring is ${monitor}. This browser has ${context.auditCount || 0} audit events and ${context.paperCount || 0} paper variants in this session.`;
       }
       if (/help|what can you do|commands|navigate/.test(query)) {
-        return "I can summarize system posture, explain monitoring privacy, report Sentinel risk, describe the paper and question workflows, and point you to audit, unlock, or recovery controls. I work entirely offline.";
+        return "I can summarize this browser’s activity and explain exam setup, the question bank, monitoring, and the audit.";
       }
-      if (/encryption|aes|rsa|shamir|key/.test(query)) {
-        return "The Encryption view demonstrates an AES-256-GCM payload, RSA-OAEP key wrapping, 3-of-5 Shamir recovery shares, and a controlled release policy using browser cryptography.";
-      }
-      if (/shadow|backup|emergency/.test(query)) {
-        return `The shadow paper is ${String(context.shadowState || "dormant").toLowerCase()}. Deployment requires an authenticated God Mode session and records the action in the audit chain.`;
-      }
-      return "I don’t have a matching local briefing for that yet. Try asking about system status, monitoring privacy, Sentinel threats, paper sets, the question vault, encryption, or the security audit.";
+      return "Try asking about monitoring privacy, risk signals, exam setup, the question bank, or the security audit.";
     }
   }
 

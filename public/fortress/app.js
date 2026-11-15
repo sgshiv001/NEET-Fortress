@@ -5,14 +5,14 @@
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   const time = value => new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  NEETLearning.attach(QuestionBank);
+  ExamLearning.attach(QuestionBank);
 
   const state = {
-    view: "command",
+    view: null,
+    profile: null,
     monitorEvents: [],
-    permissionAttempted: false,
-    shuffling: true,
-    tick: 0,
+    monitorPending: false,
+    paperExam: null,
     attempt: null,
     resultAttempt: null,
     timer: null,
@@ -22,29 +22,26 @@
   const professor = new AIProfessor();
   const sentinel = new AISentinel();
   const portal = new TeacherPortal(professor);
-  const wizer = new RandomWizer(QuestionBank.questions);
-  wizer.generateSet(100);
-  const shuffler = new HyperShuffler(wizer.papers);
+  const wizer = new RandomWizer([]);
   const god = new GodMode(security);
   const guard = new LockdownGuard(sentinel, security);
   const monitor = new LocalAccessMonitor();
   const assistant = new FortressAssistant(() => ({
-    adminName: adminName(),
+    name: displayName(),
     monitoring: monitor.running,
     threat: sentinel.threat,
     paperCount: wizer.papers.length,
-    questionCount: QuestionBank.questions.length,
+    questionCount: ExamLearning.questionPool("organization").length,
     auditCount: security.audit.length,
-    shadowState: god.shadow.state,
   }));
 
-  function adminName() {
-    return localStorage.getItem("nf5_admin_name") || localStorage.getItem("nf4_admin_name") || "Security Authority";
+  function displayName(profile = state.profile) {
+    return ExamWorkspace.account()?.displayName || profile?.name || "";
   }
 
-  function greeting() {
-    const hour = new Date().getHours();
-    return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  function canView(view) {
+    const role = ExamWorkspace.roles[state.profile.role];
+    return role.views.includes(view) || (role.views.includes("student") && ["exam", "results"].includes(view));
   }
 
   function toast(title, message) {
@@ -60,86 +57,105 @@
     if (el) el.style.width = `${Math.max(0, Math.min(100, value))}%`;
   }
 
-  function updateIdentity() {
-    $("#welcomeTimeGreeting").textContent = greeting();
-    $("#welcomeAdminName").textContent = adminName();
-    $("#todayLabel").textContent = new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-    $("#setupAdminName").value = adminName();
+  function profileFromForm() {
+    return {
+      name: $("#profileName").value,
+      organization: $("#profileOrganization").value,
+      type: $("#profileType").value,
+      role: $("#profileRole").value,
+    };
   }
 
-  function enterWorkspace() {
-    $("#adminWelcome").hidden = true;
-    $("#appShell").inert = false;
-    $("#assistantLauncher").hidden = false;
+  function renderWelcome(profile) {
+    const name = displayName(profile).trim();
+    const type = ExamWorkspace.types[profile.type];
+    $("#welcomeTimeGreeting").textContent = ExamWorkspace.greeting();
+    $("#welcomeUserName").textContent = name ? `, ${name}` : "";
+    $("#welcomeOrganization").textContent = [profile.organization.trim(), type].filter(Boolean).join(" · ") || "Exam security workspace";
+    $("#welcomeRole").textContent = ExamWorkspace.roles[profile.role].label;
+    $("#welcomeAccess").textContent = ExamWorkspace.account() ? "Signed in · Local preview" : "Local preview";
   }
 
-  function resetGate() {
-    $("#welcomePermissionGate").hidden = false;
-    $("#permissionReady").hidden = true;
-    $("#permissionBlocked").hidden = true;
-    $("#welcomeMonitorState").textContent = "Requesting";
-    $("#welcomeEnableMonitor").disabled = false;
-  }
-
-  function showBlocked(reason) {
-    $("#welcomePermissionGate").hidden = true;
-    $("#permissionReady").hidden = true;
-    $("#permissionBlocked").hidden = false;
-    $("#blockedReason").textContent = reason || "Camera or microphone permission was declined. Administrators may continue without monitoring.";
-    $("#welcomeMonitorState").textContent = "Off";
-  }
-
-  function showReady() {
-    $("#welcomePermissionGate").hidden = true;
-    $("#permissionBlocked").hidden = true;
-    $("#permissionReady").hidden = false;
-    $("#welcomeMonitorState").textContent = "Active";
-  }
-
-  function showGreeting(requestPermission = false) {
-    updateIdentity();
-    $("#adminWelcome").hidden = false;
+  function showGreeting(focus = true) {
+    $("#profileName").value = displayName();
+    $("#profileName").readOnly = Boolean(ExamWorkspace.account());
+    $("#profileOrganization").value = state.profile.organization;
+    $("#profileType").value = state.profile.type;
+    $("#profileRole").value = state.profile.role;
+    $("#workspaceError").hidden = true;
+    renderWelcome(state.profile);
+    $("#workspaceWelcome").hidden = false;
     $("#appShell").inert = true;
     $("#assistantLauncher").hidden = true;
     $("#assistantPanel").hidden = true;
-    if (monitor.running) showReady();
-    else resetGate();
-    if (requestPermission && !state.permissionAttempted) {
-      state.permissionAttempted = true;
-      setTimeout(() => startMonitoring(true), 350);
-    }
+    if (focus) $("#welcomeHeading").focus();
   }
 
-  async function startMonitoring(fromGate = false) {
-    $("#welcomeEnableMonitor").disabled = true;
-    $("#startMonitorBtn").disabled = true;
+  function enterWorkspace(event) {
+    event.preventDefault();
+    const previous = state.profile;
+    try {
+      const profile = profileFromForm();
+      if (ExamWorkspace.account()) profile.name = "";
+      state.profile = ExamWorkspace.save(profile);
+    } catch {
+      $("#workspaceError").textContent = "Browser storage is unavailable. Allow local storage and try again.";
+      $("#workspaceError").hidden = false;
+      return;
+    }
+    const { role, organization } = state.profile;
+    $("#workspaceUser").textContent = displayName() || "Guest";
+    $("#workspaceRole").textContent = ExamWorkspace.roles[role].label;
+    $("#sidebarOrganization").textContent = organization || "Exam security";
+    $("#candidateOrganization").textContent = organization || "Exam Fortress";
+    $("#setupAdminName").value = localStorage.getItem("nf5_admin_name") || localStorage.getItem("nf4_admin_name") || displayName();
+    $$(".nav [data-view]").forEach(button => { button.hidden = !canView(button.dataset.view); });
+    $("#sidebarMonitor").hidden = !canView("monitor");
+    $("#monitorStatusButton").hidden = !canView("monitor");
+    if (!canView("monitor") && monitor.running) monitor.stop();
+    if (previous.role !== role || previous.name !== state.profile.name) $("#assistantMessages").replaceChildren();
+    $("#workspaceWelcome").hidden = true;
+    $("#appShell").inert = false;
+    $("#assistantLauncher").hidden = !canView("command");
+    navigate(previous.role === role && state.view ? state.view : ExamWorkspace.roles[role].home);
+    $("#viewTitle").focus();
+  }
+
+  async function startMonitoring() {
+    if (!canView("monitor") || state.monitorPending || monitor.running) return;
+    state.monitorPending = true;
+    updateMonitorUi();
+    $("#monitorFeedback").textContent = "Waiting for browser permission.";
     try {
       await monitor.start($("#monitorVideo"), $("#monitorCanvas"));
-      showReady();
+      if (!canView("monitor")) {
+        monitor.stop();
+        $("#monitorFeedback").textContent = "";
+        return;
+      }
       await security.log("ACCESS_MONITOR_STARTED", "Camera and microphone analysis started with browser permission", "secure");
       renderActivity();
-      updateMonitorUi();
-      if (!fromGate) toast("Monitoring active", "Local camera and microphone analysis is now running.");
+      $("#monitorFeedback").textContent = "Monitoring is active in this browser.";
     } catch (error) {
-      showBlocked(error.message);
+      $("#monitorFeedback").textContent = `Monitoring could not start. ${error.message || "Check your browser permissions."}`;
       await security.log("ACCESS_MONITOR_UNAVAILABLE", error.message || "Media permission unavailable", "warning");
       renderActivity();
-      updateMonitorUi();
     } finally {
-      $("#welcomeEnableMonitor").disabled = false;
-      $("#startMonitorBtn").disabled = false;
+      state.monitorPending = false;
+      updateMonitorUi();
     }
   }
 
   function stopMonitoring() {
     monitor.stop("Administrator stopped monitoring.");
+    $("#monitorFeedback").textContent = "Camera and microphone are off.";
     toast("Monitoring stopped", "Camera and microphone tracks were released.");
     updateMonitorUi();
   }
 
   function updateMonitorUi() {
     const running = monitor.running;
-    $("#startMonitorBtn").disabled = running;
+    $("#startMonitorBtn").disabled = running || state.monitorPending;
     $("#stopMonitorBtn").disabled = !running;
     $("#cameraState").textContent = running ? "Camera active" : "Camera off";
     $("#analysisState").textContent = running ? monitor.metrics.environment : "Standby";
@@ -174,10 +190,7 @@
 
   async function seedAudit() {
     if (security.audit.length) return;
-    await security.log("AI_OS_REBUILT", "NEET Fortress exam security dashboard initialized", "secure");
-    await security.log("QUESTION_VAULT_READY", `${QuestionBank.questions.length} questions loaded into the protected vault`, "secure");
-    await security.log("PAPER_AI_READY", `${wizer.papers.length} paper candidates generated`, "info");
-    await security.log("SENTINEL_READY", "Local anomaly model standing by", "secure");
+    await security.log("WORKSPACE_STARTED", "Exam Fortress browser workspace initialized", "info");
   }
 
   function eventRow(entry) {
@@ -188,28 +201,117 @@
     $("#activityFeed").innerHTML = security.audit.slice(-5).reverse().map(eventRow).join("");
   }
 
+  async function recordExamEvent(type, attempt) {
+    try {
+      await security.log(type, attemptName(attempt), "info");
+      renderActivity();
+    } catch {
+      toast("Audit entry unavailable", "This browser could not save the exam activity.");
+    }
+  }
+
   function renderQuestionStats() {
-    $("#bankMetric").textContent = QuestionBank.questions.length;
-    $("#vaultHeading").textContent = `${QuestionBank.questions.length} questions`;
-    $("#subjectStats").innerHTML = QuestionBank.stats().map(item => `<article><span>${esc(item.subject)}</span><strong>${item.count}</strong><small>${item.averageQuality}% average AI quality</small></article>`).join("");
+    const bank = ExamLearning.questionPool($("#questionBankSource").value);
+    $("#bankMetric").textContent = ExamLearning.questionPool("organization").length;
+    $("#vaultHeading").textContent = `${bank.length} questions`;
+    $("#subjectStats").innerHTML = QuestionBank.stats(bank).map(item => `<article><span>${esc(item.subject)}</span><strong>${item.count}</strong></article>`).join("");
   }
 
   function renderQuestions() {
     const query = $("#questionSearch").value.trim().toLowerCase();
-    const list = QuestionBank.questions.filter(q => !query || `${q.text} ${q.chapter} ${q.subject}`.toLowerCase().includes(query)).slice(0, 10);
-    $("#questionList").innerHTML = list.map(q => `<article><b>${esc(q.id)}</b><div><strong>${esc(q.text)}</strong><p>${esc(q.subject)} · ${esc(q.chapter)} · Level ${q.difficulty} · ${q.quality}% quality</p></div><span class="tag">${esc(q.bloom)}</span></article>`).join("") || `<article><div><strong>No questions found</strong><p>Try a subject, chapter, or a phrase from the question.</p></div></article>`;
+    const bank = ExamLearning.questionPool($("#questionBankSource").value);
+    const list = bank.filter(q => !query || `${q.text} ${q.chapter} ${q.subject}`.toLowerCase().includes(query)).slice(0, 10);
+    $("#questionList").innerHTML = list.map(q => `<article><div><strong>${esc(q.text)}</strong><p>${esc(q.subject)} · ${esc(q.chapter)} · Difficulty ${esc(q.difficulty)}</p></div></article>`).join("") || `<article><div><strong>No questions found</strong><p>${query ? "Search by subject, topic, or question text." : "Add a question or import a question bank to get started."}</p></div></article>`;
   }
 
   function renderPapers() {
     $("#paperMetric").textContent = wizer.papers.length;
-    $("#paperTable").innerHTML = wizer.top(8).map(paper => `<div><span><strong>${esc(paper.id)}</strong><p>${paper.questions.length} questions · balance ${paper.balance}% · quality ${paper.quality}%</p></span><span>${paper.accessCount} reads</span></div>`).join("");
+    $("#paperVariantsHeading").textContent = state.paperExam ? `Paper variants for ${state.paperExam}` : "Paper variants";
+    $("#paperTable").innerHTML = wizer.papers.map(paper => {
+      const subjects = QuestionBank.stats(paper.questions).map(item => `${esc(item.subject)} (${item.count})`).join(" · ");
+      return `<div><span><strong>${esc(paper.id)}</strong><p>${subjects}</p></span><span>${paper.questions.length} questions</span></div>`;
+    }).join("") || '<p class="empty-state">Generate variants to see how questions are distributed across subjects.</p>';
   }
 
-  function updateShuffle() {
-    if (!state.shuffling) return;
-    state.tick = (state.tick + 1) % 10000;
-    $("#shuffleTick").textContent = String(state.tick).padStart(4, "0");
-    $("#shuffleEntropy").textContent = `${(99.2 + Math.random() * 0.7).toFixed(1)}% entropy`;
+  function setOptions(select, items) {
+    select.replaceChildren(select.options[0], ...items.map(([value, label]) => new Option(label, value)));
+  }
+
+  function updateExamSubjects(subject = $("#examSubject").value) {
+    const source = $("#examSource").value;
+    const select = $("#examSubject");
+    setOptions(select, ExamLearning.subjects(source).map(name => [name, name]));
+    select.value = Array.from(select.options).some(option => option.value === subject) ? subject : "";
+    const available = ExamLearning.questionPool(source, select.value).length;
+    $("#examAvailability").textContent = `${available} questions available in this selection.`;
+  }
+
+  function renderExamCatalog(id = $("#savedExamEdit").value) {
+    const catalog = ExamLearning.exams();
+    const select = $("#savedExamEdit");
+    setOptions(select, catalog.map(exam => [exam.id, exam.name]));
+    select.value = catalog.some(exam => exam.id === id) ? id : "";
+    $("#removeExam").hidden = !select.value;
+    $("#examMetric").textContent = catalog.length;
+  }
+
+  function loadExamForm() {
+    const form = $("#examSetupForm");
+    const exam = ExamLearning.exams().find(item => item.id === $("#savedExamEdit").value);
+    form.reset();
+    if (exam) {
+      for (const field of ["name", "source", "count", "minutes", "correct", "incorrect"]) form.elements.namedItem(field).value = exam[field];
+    }
+    updateExamSubjects(exam?.subject || "");
+    $("#removeExam").hidden = !exam;
+  }
+
+  function examFormValues() {
+    return Object.fromEntries(new FormData($("#examSetupForm")));
+  }
+
+  async function saveExam(event) {
+    event.preventDefault();
+    try {
+      const exam = ExamLearning.saveExam(examFormValues(), $("#savedExamEdit").value || undefined);
+      renderExamCatalog(exam.id);
+      await security.log("EXAM_SAVED", `Exam configuration saved for ${exam.name}`, "info");
+      renderActivity();
+      toast("Exam saved", `${exam.name} is available in the candidate hub.`);
+    } catch (error) { toast("Could not save exam", error.message); }
+  }
+
+  async function removeExam() {
+    const exam = ExamLearning.exams().find(item => item.id === $("#savedExamEdit").value);
+    if (!exam || !confirm(`Remove ${exam.name} from the candidate hub?`)) return;
+    try {
+      ExamLearning.removeExam(exam.id);
+      renderExamCatalog("");
+      loadExamForm();
+      await security.log("EXAM_REMOVED", `Exam configuration removed for ${exam.name}`, "info");
+      renderActivity();
+      toast("Exam removed", "Existing attempts remain in candidate history.");
+    } catch (error) { toast("Could not remove exam", error.message); }
+  }
+
+  async function generatePapers() {
+    if (!$("#examSetupForm").reportValidity()) return;
+    try {
+      const exam = ExamLearning.validateExam(examFormValues());
+      wizer.bank = ExamLearning.questionPool(exam.source, exam.subject);
+      wizer.generateSet(12, exam.count);
+      const variants = new Set();
+      wizer.papers = wizer.papers.filter(paper => {
+        const key = JSON.stringify(paper.questions.map(question => question.id));
+        if (variants.has(key)) return false;
+        variants.add(key);
+        return true;
+      });
+      state.paperExam = exam.name;
+      renderPapers();
+      await security.log("PAPER_VARIANTS_GENERATED", `${wizer.papers.length} paper variants generated for ${exam.name}`, "info");
+      renderActivity();
+    } catch (error) { toast("Could not generate papers", error.message); }
   }
 
   function renderSentinel() {
@@ -218,12 +320,12 @@
     $("#sentinelThreat").textContent = String(threat);
     const label = threat >= 70 ? "High risk" : threat >= 28 ? "Elevated risk" : "Low risk";
     $("#sentinelState").textContent = label;
-    $("#coreSummary").textContent = `${label}. Local AI checks are reading ${monitor.running ? "live access signals" : "system-only signals"}.`;
+    $("#coreSummary").textContent = `${label} in the local simulation. Monitoring is ${monitor.running ? "active" : "off"}.`;
     $("#sentinelRecommendations").innerHTML = recommendations(threat).map(item => `<div><strong>${esc(item.title)}</strong><p>${esc(item.body)}</p></div>`).join("");
     const signals = [
       ["Access environment", monitor.running ? monitor.metrics.environment : "Monitoring off"],
-      ["Question vault", `${QuestionBank.questions.length} balanced items`],
-      ["Paper AI", `${wizer.papers.length} candidates with rotating entropy`],
+      ["Question bank", `${ExamLearning.questionPool("organization").length} organization questions`],
+      ["Paper variants", `${wizer.papers.length} generated this session`],
       ["Audit chain", `${security.audit.length} local events`],
     ];
     $("#sentinelTable").innerHTML = signals.map(([title, body]) => `<div><span><strong>${esc(title)}</strong><p>${esc(body)}</p></span><span>${label}</span></div>`).join("");
@@ -259,12 +361,13 @@
     $("#merkleRoot").textContent = security.merkleRoot || "No root";
     $("#integrityStatus").textContent = intact ? `All ${security.audit.length} local events are hash-linked.` : "The audit chain failed verification.";
     $("#auditTable").innerHTML = security.audit.slice().reverse().slice(0, 12).map(eventRow).join("");
+    return intact;
   }
 
   function exportAudit() {
     const blob = security.exportAudit();
     const url = URL.createObjectURL(blob);
-    const anchor = Object.assign(document.createElement("a"), { href: url, download: `neet-fortress-audit-${Date.now()}.json` });
+    const anchor = Object.assign(document.createElement("a"), { href: url, download: `exam-fortress-audit-${Date.now()}.json` });
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast("Audit exported", "The forensic JSON package was prepared locally.");
@@ -279,7 +382,7 @@
     localStorage.setItem("nf5_master", pass);
     localStorage.setItem("nf5_admin_name", name);
     await security.log("ADMIN_INITIALIZED", "Local administrator profile configured", "secure");
-    updateIdentity();
+    $("#setupAdminName").value = name;
     renderActivity();
     toast("Admin initialized", "Your local administrator profile is ready.");
   }
@@ -308,11 +411,12 @@
     localStorage.removeItem("nf5_admin_name");
     localStorage.removeItem("nf4_master");
     localStorage.removeItem("nf4_admin_name");
-    updateIdentity();
+    $("#setupAdminName").value = displayName();
     toast("Admin setup reset", "Local administrator details were cleared in this browser.");
   }
 
   function navigate(view) {
+    if (!canView(view)) return;
     state.view = view;
     $$(".view").forEach(section => section.classList.toggle("active", section.id === `view-${view}`));
     $$(".nav button").forEach(button => button.classList.toggle("active", button.dataset.view === view));
@@ -325,37 +429,50 @@
     if (view === "student") renderStudentHub();
   }
 
+  function attemptName(attempt) {
+    if (attempt.name) return attempt.name;
+    if (attempt.mode === "mock") return "Science mock exam";
+    return attempt.subject && attempt.subject !== "All" ? `${attempt.subject} practice` : "Science practice";
+  }
+
   function renderStudentHub() {
-    const name = NEETLearning.studentName();
-    $("#studentName").value = name;
-    $("#studentGreeting").textContent = name ? `Ready to study, ${name}?` : "Your NEET practice desk";
-    const current = NEETLearning.current();
+    const name = displayName();
+    $("#studentGreeting").textContent = name ? `Your exams, ${name}` : "Your exams";
+    const current = ExamLearning.current();
     const active = current?.status === "in_progress";
-    $("#startMockExam").textContent = active ? "Resume current exam" : "Start full mock";
-    $("#startPractice").textContent = active ? "Resume current exam" : "Start practice";
-    const history = NEETLearning.history();
-    $("#studentHistory").innerHTML = `${active ? `<div class="history-resume"><span><strong>Exam in progress</strong><p>${current.mode === "mock" ? "Full mock" : `${esc(current.subject)} practice`} · ${current.questions.length} questions</p></span><button class="primary-btn" id="resumeExam">Resume</button></div>` : ""}${history.length ? history.slice(0, 8).map((item, i) => `<button class="history-row" data-history-index="${i}"><span><strong>${item.mode === "mock" ? "Full mock exam" : `${esc(item.subject)} practice`}</strong><small>${new Date(item.result?.completedAt || item.startedAt).toLocaleString()}</small></span><b>${item.result?.score ?? 0}<small> / ${item.result?.maxScore ?? 0}</small></b></button>`).join("") : `<p class="empty-state">No completed attempts yet. Start a practice set to see your progress here.</p>`}`;
+    $("#startMockExam").disabled = active;
+    $("#startPractice").disabled = active;
+    $("#activeAttempt").innerHTML = active ? `<div class="history-resume"><span><strong>Exam in progress</strong><p>${esc(attemptName(current))} · ${current.questions.length} questions</p></span><button class="primary-btn" id="resumeExam">Resume</button></div>` : "";
+    $("#availableExams").innerHTML = ExamLearning.exams().map(exam =>
+      `<article class="student-launch-card"><span class="eyebrow">${exam.source === "demo" ? "Science sample" : esc(exam.subject || "Organization exam")}</span><h3>${esc(exam.name)}</h3><p>${exam.count} questions · ${exam.minutes} min<br>Correct +${exam.correct} · Incorrect ${exam.incorrect} · Unanswered 0</p><button class="primary-btn" data-exam-id="${esc(exam.id)}"${active ? " disabled" : ""}>Start exam</button></article>`
+    ).join("") || '<p class="empty-state">No exams have been set up on this browser yet.</p>';
+    const history = ExamLearning.history();
+    $("#studentHistory").innerHTML = history.length ? history.slice(0, 8).map((item, i) =>
+      `<button class="history-row" data-history-index="${i}"><span><strong>${esc(attemptName(item))}</strong><small>${new Date(item.result?.completedAt || item.startedAt).toLocaleString()}</small></span><b>${item.result?.score ?? 0}<small> / ${item.result?.maxScore ?? 0}</small></b></button>`
+    ).join("") : '<p class="empty-state">No completed attempts yet.</p>';
     const resume = $("#resumeExam");
     if (resume) resume.addEventListener("click", resumeExam);
     $$("[data-history-index]").forEach(button => button.addEventListener("click", () => {
-      const item = NEETLearning.history()[Number(button.dataset.historyIndex)];
+      const item = ExamLearning.history()[Number(button.dataset.historyIndex)];
       if (item) showResults(item);
     }));
   }
 
-  function beginExam(mode, subject = "All") {
+  function beginExam(mode, subject = "", exam) {
     try {
-      const existing = NEETLearning.current();
-      state.attempt = existing?.status === "in_progress" ? existing : NEETLearning.start(mode, subject);
+      const existing = ExamLearning.current();
+      if (!mode && existing?.status !== "in_progress") return renderStudentHub();
+      state.attempt = existing?.status === "in_progress" ? existing : ExamLearning.start(mode, subject, exam);
       renderExam();
       navigate("exam");
       if (state.timer) clearInterval(state.timer);
       state.timer = setInterval(updateExamTimer, 1000);
+      if (!existing && mode === "configured") void recordExamEvent("EXAM_STARTED", state.attempt);
       updateExamTimer();
     } catch (error) { toast("Could not start exam", error.message); }
   }
 
-  function resumeExam() { beginExam("mock"); }
+  function resumeExam() { beginExam(); }
 
   function renderExam() {
     const attempt = state.attempt;
@@ -363,8 +480,8 @@
     const index = Math.max(0, Math.min(attempt.currentIndex, attempt.questions.length - 1));
     attempt.currentIndex = index;
     const question = attempt.questions[index];
-    $("#examModeLabel").textContent = attempt.mode === "mock" ? "FULL MOCK EXAM" : "FOCUSED PRACTICE";
-    $("#examSubjectTitle").textContent = attempt.mode === "mock" ? "NEET Full Mock" : `${attempt.subject} Practice`;
+    $("#examModeLabel").textContent = attempt.mode === "configured" ? "TIMED EXAM" : "SCIENCE SAMPLE";
+    $("#examSubjectTitle").textContent = attemptName(attempt);
     $("#examQuestionSubject").textContent = question.subject.toUpperCase();
     $("#examQuestionChapter").textContent = question.chapter;
     $("#examQuestionNumber").textContent = `Question ${index + 1}`;
@@ -374,10 +491,10 @@
     $("#examAnsweredText").textContent = `${Object.keys(attempt.answers).length} answered`;
     $("#examProgressBar").style.width = `${Object.keys(attempt.answers).length / attempt.questions.length * 100}%`;
     $("#examPrevious").disabled = index === 0;
-    $("#examNext").textContent = index === attempt.questions.length - 1 ? "Finish review" : "Save & next";
+    $("#examNext").textContent = index === attempt.questions.length - 1 ? "Review unanswered" : "Save & next";
     $("#examMarkReview").classList.toggle("marked", attempt.marked.includes(index));
     $("#examPalette").innerHTML = attempt.questions.map((_, i) => `<button class="palette-question${attempt.answers[i] !== undefined ? " answered" : ""}${attempt.marked.includes(i) ? " review" : ""}${i === index ? " current" : ""}" data-question-index="${i}" aria-label="Question ${i + 1}">${i + 1}</button>`).join("");
-    NEETLearning.update(attempt);
+    ExamLearning.update(attempt);
   }
 
   function updateExamTimer() {
@@ -394,18 +511,23 @@
     const unanswered = state.attempt.questions.length - Object.keys(state.attempt.answers).length;
     if (!auto && !confirm(`Submit this exam? ${unanswered} question${unanswered === 1 ? " is" : "s are"} unanswered.`)) return;
     if (state.timer) clearInterval(state.timer);
-    const completed = NEETLearning.finish(state.attempt);
-    state.attempt = null;
-    showResults(completed);
-    toast(auto ? "Time is up" : "Exam submitted", `You scored ${completed.result.score} out of ${completed.result.maxScore}.`);
+    try {
+      const completed = ExamLearning.finish(state.attempt);
+      state.attempt = null;
+      if (canView("results")) showResults(completed);
+      if (completed.mode === "configured") void recordExamEvent(auto ? "EXAM_TIME_EXPIRED" : "EXAM_SUBMITTED", completed);
+      toast(auto ? "Time is up" : "Exam submitted", `You scored ${completed.result.score} out of ${completed.result.maxScore}.`);
+    } catch {
+      toast("Could not save results", "Check browser storage, then submit again.");
+    }
   }
 
   function showResults(attempt) {
     state.resultAttempt = attempt;
-    const result = attempt.result || NEETLearning.score(attempt);
-    $("#resultModeLabel").textContent = `${attempt.mode === "mock" ? "Full mock" : `${esc(attempt.subject)} practice`} · ${new Date(result.completedAt || attempt.startedAt).toLocaleString()}`;
+    const result = attempt.result || ExamLearning.score(attempt);
+    $("#resultModeLabel").textContent = `${attemptName(attempt)} · ${new Date(result.completedAt || attempt.startedAt).toLocaleString()}`;
     $("#resultSummary").innerHTML = `<article><span>Score</span><strong>${result.score}<small> / ${result.maxScore}</small></strong></article><article><span>Correct</span><strong>${result.correct}</strong></article><article><span>Incorrect</span><strong>${result.incorrect}</strong></article><article><span>Unanswered</span><strong>${result.unanswered}</strong></article><article><span>Accuracy</span><strong>${result.accuracy}%</strong></article>`;
-    $("#resultSubjects").innerHTML = result.subjects.filter(row => row.total).map(row => `<div class="result-subject-row"><span><strong>${row.subject}</strong><small>${row.correct} right · ${row.incorrect} wrong · ${row.unanswered} blank</small></span><b>${row.score} <small>/ ${row.total * 4}</small></b></div>`).join("");
+    $("#resultSubjects").innerHTML = result.subjects.filter(row => row.total).map(row => `<div class="result-subject-row"><span><strong>${esc(row.subject)}</strong><small>${row.correct} right · ${row.incorrect} wrong · ${row.unanswered} blank</small></span><b>${row.score} <small>/ ${row.maxScore ?? row.total * 4}</small></b></div>`).join("");
     renderResultReview();
     navigate("results");
   }
@@ -428,17 +550,20 @@
 
   function addQuestion(event) {
     event.preventDefault();
+    const options = Array.from({ length: 6 }, (_, index) => $(`#newOption${index}`).value.trim());
+    const answer = Number($("#newQuestionAnswer").value);
+    if (!options[answer]) return toast("Choose the correct option", "Enter an answer for the option you selected.");
     const question = {
       subject: $("#newQuestionSubject").value, chapter: $("#newQuestionChapter").value.trim(), text: $("#newQuestionText").value.trim(),
-      explanation: $("#newQuestionExplanation").value.trim(), options: [0, 1, 2, 3].map(index => $(`#newOption${index}`).value.trim()), answer: Number($("#newQuestionAnswer").value), difficulty: Number($("#newQuestionDifficulty").value), bloom: "Understand",
+      explanation: $("#newQuestionExplanation").value.trim(), options: options.filter(Boolean),
+      answer: options.slice(0, answer).filter(Boolean).length, difficulty: Number($("#newQuestionDifficulty").value),
     };
     try {
-      const saved = NEETLearning.saveCustom(question);
+      const saved = ExamLearning.saveCustom(question);
       QuestionBank.questions.push(saved);
-      wizer.generateSet(100);
-      renderQuestionStats(); renderQuestions(); renderPapers();
+      renderUpdatedBank();
       event.currentTarget.reset();
-      toast("Question added", "It is available in practice sets and future papers on this browser.");
+      toast("Question added", "It is available when configuring organization exams on this browser.");
     } catch (error) { toast("Question not added", error.message); }
   }
 
@@ -446,24 +571,33 @@
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const count = NEETLearning.importQuestions(JSON.parse(await file.text()));
-      NEETLearning.attach({ questions: QuestionBank.questions });
-      wizer.generateSet(100);
-      renderQuestionStats(); renderQuestions(); renderPapers();
+      const count = ExamLearning.importQuestions(JSON.parse(await file.text()));
+      ExamLearning.attach(QuestionBank);
+      renderUpdatedBank();
       toast("Question bank imported", `${count} questions added to this browser.`);
     } catch (error) { toast("Import failed", error.message || "Could not read this JSON file."); }
     finally { event.target.value = ""; }
   }
 
+  function renderUpdatedBank() {
+    $("#questionBankSource").value = "organization";
+    renderQuestionStats();
+    renderQuestions();
+    renderSentinel();
+    updateExamSubjects();
+  }
+
   function exportQuestions() {
-    const url = URL.createObjectURL(new Blob([JSON.stringify({ questions: QuestionBank.questions }, null, 2)], { type: "application/json" }));
-    const anchor = Object.assign(document.createElement("a"), { href: url, download: "neet-question-bank.json" });
+    const source = $("#questionBankSource").value;
+    const bank = ExamLearning.questionPool(source);
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ questions: bank }, null, 2)], { type: "application/json" }));
+    const anchor = Object.assign(document.createElement("a"), { href: url, download: `exam-fortress-${source}-questions.json` });
     anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   function openAssistant() {
     $("#assistantPanel").hidden = false;
-    if (!$("#assistantMessages").children.length) assistantMessage(assistant.greeting(adminName()));
+    if (!$("#assistantMessages").children.length) assistantMessage(assistant.greeting(displayName()));
     $("#assistantInput").focus();
   }
 
@@ -485,24 +619,32 @@
   function bind() {
     $$(".nav button").forEach(button => button.addEventListener("click", () => navigate(button.dataset.view)));
     $$("[data-view-jump]").forEach(button => button.addEventListener("click", () => navigate(button.dataset.viewJump)));
+    $(".brand").addEventListener("click", event => {
+      event.preventDefault();
+      navigate(ExamWorkspace.roles[state.profile.role].home);
+    });
     $("#mobileMenu").addEventListener("click", () => $(".side").classList.toggle("open"));
-    $("#showGreeting").addEventListener("click", () => showGreeting(false));
+    $("#showGreeting").addEventListener("click", () => showGreeting());
+    $("#workspaceForm").addEventListener("input", () => renderWelcome(profileFromForm()));
+    $("#workspaceForm").addEventListener("submit", enterWorkspace);
     $("#monitorStatusButton").addEventListener("click", () => navigate("monitor"));
-    $("#welcomeEnableMonitor").addEventListener("click", () => startMonitoring(true));
-    $("#retryMonitorPermission").addEventListener("click", () => { resetGate(); startMonitoring(true); });
-    $("#continueWithoutMonitoring").addEventListener("click", enterWorkspace);
-    $("#continueToWorkspace").addEventListener("click", enterWorkspace);
-    $("#enterCommandCenter").addEventListener("click", enterWorkspace);
-    $("#startMonitorBtn").addEventListener("click", () => startMonitoring(false));
+    $("#startMonitorBtn").addEventListener("click", startMonitoring);
     $("#stopMonitorBtn").addEventListener("click", stopMonitoring);
     $("#clearMonitorEvents").addEventListener("click", () => { state.monitorEvents = []; renderMonitorEvents(); });
     $("#questionSearch").addEventListener("input", renderQuestions);
+    $("#questionBankSource").addEventListener("change", () => { renderQuestionStats(); renderQuestions(); });
     $("#startMockExam").addEventListener("click", () => beginExam("mock"));
     $("#startPractice").addEventListener("click", () => beginExam("practice", $("#practiceSubject").value));
-    $("#studentName").addEventListener("change", event => { NEETLearning.setStudentName(event.target.value); renderStudentHub(); });
+    $("#availableExams").addEventListener("click", event => {
+      const button = event.target.closest("[data-exam-id]");
+      if (!button) return;
+      const exam = ExamLearning.exams().find(item => item.id === button.dataset.examId);
+      if (exam) beginExam("configured", "", exam);
+      else renderStudentHub();
+    });
     $("#clearStudentHistory").addEventListener("click", () => {
-      if (!NEETLearning.history().length || !confirm("Clear all completed attempts from this browser?")) return;
-      NEETLearning.clearHistory(); renderStudentHub(); toast("Progress cleared", "Completed exam history was removed from this browser.");
+      if (!ExamLearning.history().length || !confirm("Clear your completed attempts from this browser?")) return;
+      ExamLearning.clearHistory(); renderStudentHub(); toast("Progress cleared", "Your completed exam history was removed from this browser.");
     });
     $("#examOptions").addEventListener("click", event => {
       const button = event.target.closest("[data-option]");
@@ -516,7 +658,17 @@
       state.attempt.currentIndex = Number(button.dataset.questionIndex); renderExam();
     });
     $("#examPrevious").addEventListener("click", () => { if (state.attempt && state.attempt.currentIndex > 0) { state.attempt.currentIndex -= 1; renderExam(); } });
-    $("#examNext").addEventListener("click", () => { if (state.attempt) { state.attempt.currentIndex = Math.min(state.attempt.questions.length - 1, state.attempt.currentIndex + 1); renderExam(); } });
+    $("#examNext").addEventListener("click", () => {
+      const attempt = state.attempt;
+      if (!attempt) return;
+      if (attempt.currentIndex < attempt.questions.length - 1) attempt.currentIndex += 1;
+      else {
+        const unanswered = attempt.questions.findIndex((_, index) => attempt.answers[index] === undefined);
+        if (unanswered < 0) return $("#submitExamTop").focus();
+        attempt.currentIndex = unanswered;
+      }
+      renderExam();
+    });
     $("#examClearAnswer").addEventListener("click", () => { if (state.attempt) { delete state.attempt.answers[state.attempt.currentIndex]; renderExam(); } });
     $("#examMarkReview").addEventListener("click", () => {
       if (!state.attempt) return;
@@ -531,11 +683,18 @@
     $("#questionEditorForm").addEventListener("submit", addQuestion);
     $("#importQuestions").addEventListener("change", importQuestionBank);
     $("#exportQuestions").addEventListener("click", exportQuestions);
-    $("#generatePapersBtn").addEventListener("click", async () => { wizer.generateSet(100); await security.log("PAPER_SET_REGENERATED", "Paper AI regenerated the candidate pool", "info"); renderPapers(); renderActivity(); toast("Paper set regenerated", "100 new candidates are ready for review."); });
-    $("#toggleShuffler").addEventListener("click", event => { state.shuffling = !state.shuffling; event.currentTarget.textContent = state.shuffling ? "Pause" : "Resume"; });
+    $("#savedExamEdit").addEventListener("change", loadExamForm);
+    $("#examSource").addEventListener("change", () => updateExamSubjects(""));
+    $("#examSubject").addEventListener("change", () => updateExamSubjects());
+    $("#examSetupForm").addEventListener("submit", saveExam);
+    $("#removeExam").addEventListener("click", removeExam);
+    $("#generatePapersBtn").addEventListener("click", generatePapers);
     $("#runSentinelSweep").addEventListener("click", manualSweep);
     $("#manualSentinelSweep").addEventListener("click", manualSweep);
-    $("#verifyAuditBtn").addEventListener("click", async () => { await renderAudit(); toast("Audit verified", "The current Merkle root has been recalculated."); });
+    $("#verifyAuditBtn").addEventListener("click", async () => {
+      const intact = await renderAudit();
+      toast(intact ? "Audit verified" : "Audit verification failed", $("#integrityStatus").textContent);
+    });
     $("#exportAuditBtn").addEventListener("click", exportAudit);
     $("#initializeBtn").addEventListener("click", initializeAdmin);
     $("#unlockBtn").addEventListener("click", unlockVault);
@@ -553,28 +712,31 @@
       renderMonitorEvents();
       renderActivity();
     });
-    monitor.addEventListener("state", event => {
-      if (event.detail.state === "active") showReady();
-      updateMonitorUi();
-    });
+    monitor.addEventListener("state", updateMonitorUi);
   }
 
   async function initialize() {
+    await ExamWorkspace.loadAccount();
+    state.profile = ExamWorkspace.profile();
+    for (const [value, label] of Object.entries(ExamWorkspace.types)) $("#profileType").add(new Option(label, value));
+    for (const [value, role] of Object.entries(ExamWorkspace.roles)) $("#profileRole").add(new Option(role.label, value));
+    setOptions($("#practiceSubject"), ExamLearning.subjects("demo").map(name => [name, name]));
+    $("#todayLabel").textContent = new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     bind();
-    updateIdentity();
-    await seedAudit();
+    showGreeting(false);
+    $("#continueToWorkspace").disabled = false;
     renderQuestionStats();
     renderQuestions();
-    renderStudentHub();
+    renderExamCatalog();
+    updateExamSubjects();
     renderPapers();
     renderSentinel();
     renderActivity();
     renderMonitorEvents();
     updateMonitorUi();
-    setInterval(updateShuffle, 1000);
-    shuffler.start();
-    showGreeting(false);
-    globalThis.fortress = { security, sentinel, professor, portal, wizer, shuffler, god, guard, monitor, assistant, state };
+    globalThis.fortress = { security, sentinel, professor, portal, wizer, god, guard, monitor, assistant, state };
+    await seedAudit();
+    renderActivity();
   }
 
   document.addEventListener("DOMContentLoaded", initialize);

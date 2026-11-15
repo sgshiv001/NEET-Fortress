@@ -1,5 +1,5 @@
 {
-  "name": "neet-fortress",
+  "name": "exam-fortress",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },

@@ -4,78 +4,55 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07111f">
-  <title>NEET Fortress | NEET Exam Security</title>
+  <title>Exam Fortress | Exam Security</title>
+  <link rel="icon" href="/favicon.svg">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <section class="admin-gate" id="adminWelcome" role="dialog" aria-modal="true">
+  <section class="welcome" id="workspaceWelcome" aria-labelledby="welcomeHeading">
     <div class="gate-grid">
       <div class="gate-copy">
-        <div class="product-mark"><span>NF</span><b>v5</b></div>
-        <p class="eyebrow" id="welcomeTimeGreeting">Good evening</p>
-        <h1>Welcome, <span id="welcomeAdminName">Security Authority</span>.</h1>
-        <p class="gate-summary">Welcome to NEET Fortress. Students can start practice right away. Administrators may enable optional, local environment monitoring.</p>
-        <div class="gate-stats">
-          <div><span>Posture</span><strong>Nominal</strong></div>
-          <div><span>Defense layers</span><strong>7 active</strong></div>
-          <div><span>Monitoring</span><strong id="welcomeMonitorState">Off</strong></div>
+        <div class="welcome-brand"><span class="product-mark" aria-hidden="true">EF</span><strong>Exam Fortress</strong></div>
+        <p class="eyebrow" id="welcomeOrganization">Exam security workspace</p>
+        <h1 id="welcomeHeading" tabindex="-1"><span id="welcomeTimeGreeting">Welcome</span><span id="welcomeUserName"></span></h1>
+        <p class="gate-summary">Prepare exam papers, manage candidate assessments, and review security activity for your organization.</p>
+        <div class="welcome-access">
+          <span><small>Current role</small><strong id="welcomeRole">Guest</strong></span>
+          <span><small>Access</small><strong id="welcomeAccess">Local preview</strong></span>
         </div>
       </div>
-      <div class="gate-card">
-        <div class="gate-radar"><i></i><i></i><i></i><strong>AI</strong></div>
-        <div id="welcomePermissionGate" class="permission-card">
-          <span class="permission-icon">CAM</span>
-          <div>
-            <strong>Allow camera and microphone</strong>
-            <p>Optional administrator feature. Motion, light, and sound analysis stays in this browser session. Media is not recorded or uploaded.</p>
-          </div>
-          <button class="primary-btn" id="welcomeEnableMonitor">Allow access</button>
-          <button class="secondary-btn" id="continueToWorkspace">Continue to NEET Fortress</button>
-        </div>
-        <div id="permissionReady" class="permission-card ready" hidden>
-          <span class="permission-icon">OK</span>
-          <div>
-            <strong>Monitoring active</strong>
-            <p>Local camera and microphone analysis is running. Media is not recorded, stored, uploaded, or used for identity recognition.</p>
-          </div>
-          <button class="primary-btn" id="enterCommandCenter">Enter command center</button>
-        </div>
-        <div id="permissionBlocked" class="permission-card blocked" hidden>
-          <span class="permission-icon">!</span>
-          <div>
-            <strong>Monitoring permission unavailable</strong>
-            <p id="blockedReason">Camera or microphone permission was declined. Administrators may continue without monitoring.</p>
-            <small>Enable Camera and Microphone later from the browser site-permissions menu.</small>
-          </div>
-          <div class="permission-actions">
-            <button class="secondary-btn" id="retryMonitorPermission">Try again</button>
-            <button class="primary-btn" id="continueWithoutMonitoring">Continue without monitoring</button>
-          </div>
-        </div>
-        <p class="gate-foot">Monitoring is optional. Continue to practice without granting camera or microphone access.</p>
-      </div>
+      <form class="gate-card workspace-form" id="workspaceForm">
+        <h2>Workspace profile</h2>
+        <label>Display name<input id="profileName" autocomplete="name" maxlength="64" placeholder="Your name"></label>
+        <label>Organization name<input id="profileOrganization" autocomplete="organization" maxlength="100" placeholder="Your school, university, or organization"></label>
+        <label>Organization type<select id="profileType"><option value="">Select a type</option></select></label>
+        <label>Workspace role<select id="profileRole"></select></label>
+        <p class="gate-foot">Roles control what this preview shows. Use sample or approved test data in this browser.</p>
+        <button class="primary-btn full" id="continueToWorkspace" type="submit" disabled>Open workspace</button>
+        <p class="form-error" id="workspaceError" role="alert" hidden></p>
+      </form>
     </div>
   </section>
 
   <div class="shell" id="appShell" inert>
     <aside class="side">
       <a class="brand" href="#command" data-view-link="command">
-        <span>NF</span>
-        <div><strong>NEET Fortress</strong><small>NEET Exam Security</small></div>
+        <span>EF</span>
+        <div><strong>Exam Fortress</strong><small id="sidebarOrganization">Exam security</small></div>
       </a>
       <nav class="nav" aria-label="Main">
-        <button class="active" data-view="command">NEET PaperGuard</button>
-        <button data-view="student">Student hub</button>
-        <button data-view="monitor">PaperGuard</button>
-        <button data-view="vault">QuestionVault</button>
-        <button data-view="papers">PaperShield</button>
-        <button data-view="sentinel">Sentinel</button>
+        <button class="active" data-view="command">Security overview</button>
+        <button data-view="student">Candidate hub</button>
+        <button data-view="vault">Question bank</button>
+        <button data-view="papers">Exam setup</button>
+        <button data-view="monitor">Monitoring</button>
+        <button data-view="sentinel">Risk signals</button>
         <button data-view="audit">Audit</button>
-        <button data-view="unlock">NEET Lock</button>
+        <button data-view="unlock">Local admin</button>
       </nav>
-      <div class="side-card">
+      <div class="side-card" id="sidebarMonitor">
         <span id="sideMonitorDot"></span>
-        <div><strong id="sideMonitorText">Monitoring off</strong><small>Camera and mic are admin-optional</small></div>
+        <div><strong id="sideMonitorText">Monitoring off</strong><small>Optional camera and microphone</small></div>
       </div>
     </aside>
 
@@ -83,37 +60,36 @@
       <header class="topbar">
         <button class="icon-btn mobile-only" id="mobileMenu" aria-label="Open navigation">Menu</button>
         <div>
-          <p id="todayLabel">Tuesday, 15 September 2026</p>
-          <h2 id="viewTitle">Command</h2>
+          <p id="todayLabel"></p>
+          <h2 id="viewTitle" tabindex="-1">Workspace</h2>
         </div>
         <div class="top-actions">
-          <button class="ghost-btn" id="showGreeting">Admin greeting</button>
+          <button class="ghost-btn profile-button" id="showGreeting"><strong id="workspaceUser">Guest</strong><small id="workspaceRole">Guest access</small></button>
           <button class="status-pill" id="monitorStatusButton"><span></span><b>Monitoring off</b></button>
         </div>
       </header>
 
-      <section class="view active" id="view-command" data-title="NEET PaperGuard">
+      <section class="view active" id="view-command" data-title="Security overview">
         <div class="command-hero">
           <div>
-            <p class="eyebrow">Administrator command surface</p>
-            <h1>AI-driven exam security, rebuilt as a sharper control room.</h1>
-            <p>Sentinel fuses local access signals, paper entropy, vault balance, audit state, and admin events into one operational view.</p>
+            <h1>Exam security overview</h1>
+            <p>Review paper preparation, monitoring, and audit activity for this browser workspace.</p>
             <div class="hero-actions">
               <button class="primary-btn" id="openAssistantBriefing">Ask Fortress AI</button>
               <button class="secondary-btn" data-view-jump="monitor">Review monitoring</button>
             </div>
           </div>
-          <div class="ai-core" aria-label="AI system risk">
-            <div class="core-ring"><strong id="threatValue">08</strong><span>% risk</span></div>
-            <p id="coreSummary">Low risk. All local AI checks are stable.</p>
+          <div class="ai-core" aria-label="Simulated risk score">
+            <div class="core-ring"><strong id="threatValue">08</strong><span>% demo risk</span></div>
+            <p id="coreSummary">Waiting for local signals.</p>
           </div>
         </div>
 
         <div class="metric-grid">
-          <article><span>Question vault</span><strong id="bankMetric">924</strong><small>Balanced across Physics, Chemistry, Botany, Zoology</small></article>
-          <article><span>Paper candidates</span><strong id="paperMetric">100</strong><small>Live randomized assembly pool</small></article>
-          <article><span>Security layers</span><strong>7 / 7</strong><small>Shuffle, morph, audit, encryption, lock, shadow, monitor</small></article>
-          <article><span>Access AI</span><strong id="accessMetric">Off</strong><small>Camera, motion, ambient light, and sound analysis</small></article>
+          <article><span>Organization questions</span><strong id="bankMetric">0</strong><small>Added or imported on this browser</small></article>
+          <article><span>Saved exams</span><strong id="examMetric">0</strong><small>Available in the candidate hub</small></article>
+          <article><span>Paper variants</span><strong id="paperMetric">0</strong><small>Generated in this session</small></article>
+          <article><span>Monitoring</span><strong id="accessMetric">Off</strong><small>Motion, light, and sound signals</small></article>
         </div>
 
         <div class="ops-grid">
@@ -128,24 +104,28 @@
         </div>
       </section>
 
-      <section class="view" id="view-student" data-title="Student hub">
+      <section class="view" id="view-student" data-title="Candidate hub">
         <div class="section-heading">
-          <div><p>Practice, review, improve</p><h2 id="studentGreeting">Your NEET practice desk</h2></div>
-          <label class="student-name-field"><span>Your name</span><input id="studentName" maxlength="48" placeholder="Enter your name"></label>
+          <div><p id="candidateOrganization">Exam Fortress</p><h2 id="studentGreeting">Your exams</h2></div>
         </div>
-        <div class="student-launch-grid">
-          <article class="student-launch-card">
-            <span class="eyebrow">Full mock exam</span><h3>180 questions · 3 hours</h3>
-            <p>45 questions in each subject. +4 for correct, −1 for incorrect, 0 if unanswered.</p>
-            <button class="primary-btn" id="startMockExam">Start full mock</button>
-          </article>
-          <article class="student-launch-card">
-            <span class="eyebrow">Focused practice</span><h3>20 questions · 30 minutes</h3>
-            <p>Choose a subject and get a short, timed practice set with answer explanations after submission.</p>
-            <div class="practice-controls"><select id="practiceSubject" aria-label="Practice subject"><option value="All">All subjects</option><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select><button class="secondary-btn" id="startPractice">Start practice</button></div>
-          </article>
-        </div>
-        <p class="sample-bank-note">The included questions are generated demo content. Import a reviewed NEET question bank before relying on practice scores.</p>
+        <div id="activeAttempt" class="student-history"></div>
+        <div id="availableExams" class="student-launch-grid"></div>
+        <details class="demo-exams">
+          <summary>Try a sample science exam</summary>
+          <div class="student-launch-grid">
+            <article class="student-launch-card">
+              <span class="eyebrow">Science mock</span><h3>180 questions · 3 hours</h3>
+              <p>45 questions in each subject. +4 for correct, −1 for incorrect, 0 if unanswered.</p>
+              <button class="primary-btn" id="startMockExam">Start full mock</button>
+            </article>
+            <article class="student-launch-card">
+              <span class="eyebrow">Focused practice</span><h3>20 questions · 30 minutes</h3>
+              <p>Choose a subject and get a short, timed practice set with answer explanations after submission.</p>
+              <div class="practice-controls"><select id="practiceSubject" aria-label="Practice subject"><option value="">All subjects</option></select><button class="secondary-btn" id="startPractice">Start practice</button></div>
+            </article>
+          </div>
+          <p class="sample-bank-note">Sample questions are generated for demonstration.</p>
+        </details>
         <article class="panel student-history-panel">
           <div class="panel-head"><div><span>Your progress</span><h3>Recent attempts</h3></div><button class="text-btn" id="clearStudentHistory">Clear history</button></div>
           <div class="student-history" id="studentHistory"></div>
@@ -153,11 +133,11 @@
       </section>
 
       <section class="view exam-view" id="view-exam" data-title="Exam in progress">
-        <header class="exam-topbar"><div><p id="examModeLabel">FULL MOCK EXAM</p><h2 id="examSubjectTitle">NEET Practice</h2></div><div class="exam-clock" id="examTimer" role="timer">03:00:00</div><button class="primary-btn" id="submitExamTop">Submit exam</button></header>
-        <div class="exam-progress"><span id="examProgressText">Question 1 of 180</span><div><i id="examProgressBar"></i></div><span id="examAnsweredText">0 answered</span></div>
+        <header class="exam-topbar"><div><p id="examModeLabel">EXAM</p><h2 id="examSubjectTitle"></h2></div><div class="exam-clock" id="examTimer" role="timer">00:00:00</div><button class="primary-btn" id="submitExamTop">Submit exam</button></header>
+        <div class="exam-progress"><span id="examProgressText"></span><div><i id="examProgressBar"></i></div><span id="examAnsweredText">0 answered</span></div>
         <div class="exam-layout">
           <article class="exam-question-panel">
-            <div class="exam-question-meta"><span id="examQuestionSubject">PHYSICS</span><span id="examQuestionChapter">Chapter</span><span id="examQuestionNumber">Question 1</span></div>
+            <div class="exam-question-meta"><span id="examQuestionSubject"></span><span id="examQuestionChapter"></span><span id="examQuestionNumber"></span></div>
             <h3 id="examQuestionText"></h3>
             <div class="exam-options" id="examOptions"></div>
             <div class="exam-controls"><button class="secondary-btn" id="examPrevious">Previous</button><button class="text-btn" id="examClearAnswer">Clear response</button><button class="secondary-btn" id="examMarkReview">Mark for review</button><button class="primary-btn" id="examNext">Save & next</button></div>
@@ -167,15 +147,15 @@
       </section>
 
       <section class="view" id="view-results" data-title="Exam results">
-        <div class="section-heading"><div><p id="resultModeLabel">Attempt complete</p><h2>Your result</h2></div><button class="primary-btn" id="backToStudent">Back to student hub</button></div>
+        <div class="section-heading"><div><p id="resultModeLabel">Attempt complete</p><h2>Your result</h2></div><button class="primary-btn" id="backToStudent">Back to candidate hub</button></div>
         <div id="resultSummary" class="result-summary"></div>
         <article class="panel"><div class="panel-head"><div><span>Subject breakdown</span><h3>How you did</h3></div></div><div id="resultSubjects" class="result-subjects"></div></article>
         <article class="panel result-review-panel"><div class="panel-head"><div><span>Review</span><h3>Questions and correct answers</h3></div><select id="reviewFilter" aria-label="Filter questions"><option value="all">All questions</option><option value="incorrect">Incorrect</option><option value="unanswered">Unanswered</option></select></div><div id="resultReview" class="result-review"></div></article>
       </section>
 
-      <section class="view" id="view-monitor" data-title="PaperGuard">
+      <section class="view" id="view-monitor" data-title="Monitoring">
         <div class="section-heading">
-          <div><p>Optional, consent-first access signals</p><h2>PaperGuard monitoring</h2></div>
+          <div><p>Optional camera and microphone access</p><h2>Environment monitoring</h2></div>
           <div class="button-row"><button class="secondary-btn" id="stopMonitorBtn" disabled>Stop</button><button class="primary-btn" id="startMonitorBtn">Enable monitoring</button></div>
         </div>
         <div class="monitor-layout">
@@ -186,7 +166,8 @@
               <canvas id="monitorCanvas" width="128" height="72" hidden></canvas>
               <div class="monitor-placeholder" id="monitorPlaceholder"><strong>No camera feed</strong><p>Permission is required before local analysis can start.</p></div>
             </div>
-            <p>This prototype analyzes motion, light, and sound only. It cannot reliably identify a person or prove misconduct.</p>
+            <p>Motion, light, and sound are analyzed in this browser. Media is not recorded, stored, or uploaded.</p>
+            <p id="monitorFeedback" role="status"></p>
           </article>
           <div class="signal-stack">
             <article class="signal-card"><span>Motion</span><strong id="motionValue">0%</strong><i><b id="motionBar"></b></i></article>
@@ -200,20 +181,24 @@
         </div>
       </section>
 
-      <section class="view" id="view-vault" data-title="QuestionVault">
+      <section class="view" id="view-vault" data-title="Question bank">
         <div class="section-heading">
           <div><p>Question bank</p><h2 id="vaultHeading">Question repository</h2></div>
-          <label class="search-box"><span>Search</span><input id="questionSearch" placeholder="Search chapter, subject, or question"></label>
+          <div class="button-row">
+            <label class="search-box"><span>Bank</span><select id="questionBankSource"><option value="organization">Organization questions</option><option value="demo">Science sample</option></select></label>
+            <label class="search-box"><span>Search</span><input id="questionSearch" placeholder="Search topic, subject, or question"></label>
+          </div>
         </div>
         <details class="question-editor"><summary>Add a question or import a JSON bank</summary>
           <form id="questionEditorForm" class="question-editor-form">
-            <label>Subject<select id="newQuestionSubject"><option>Physics</option><option>Chemistry</option><option>Botany</option><option>Zoology</option></select></label>
-            <label>Chapter<input id="newQuestionChapter" required maxlength="100" placeholder="e.g. Laws of Motion"></label>
+            <label>Subject<input id="newQuestionSubject" required maxlength="100" placeholder="e.g. Workplace safety"></label>
+            <label>Topic<input id="newQuestionChapter" required maxlength="100" placeholder="e.g. Emergency procedures"></label>
             <label class="wide">Question<input id="newQuestionText" required maxlength="1000" placeholder="Write the question"></label>
             <label class="wide">Explanation (optional)<input id="newQuestionExplanation" maxlength="1000" placeholder="Why is this the correct answer?"></label>
             <label>Option A<input id="newOption0" required maxlength="300"></label><label>Option B<input id="newOption1" required maxlength="300"></label>
-            <label>Option C<input id="newOption2" required maxlength="300"></label><label>Option D<input id="newOption3" required maxlength="300"></label>
-            <label>Correct option<select id="newQuestionAnswer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+            <label>Option C (optional)<input id="newOption2" maxlength="300"></label><label>Option D (optional)<input id="newOption3" maxlength="300"></label>
+            <label>Option E (optional)<input id="newOption4" maxlength="300"></label><label>Option F (optional)<input id="newOption5" maxlength="300"></label>
+            <label>Correct option<select id="newQuestionAnswer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option><option value="4">E</option><option value="5">F</option></select></label>
             <label>Difficulty<select id="newQuestionDifficulty"><option value="1">1 · Introductory</option><option value="2">2</option><option value="3" selected>3 · Standard</option><option value="4">4</option><option value="5">5 · Advanced</option></select></label>
             <div class="editor-actions"><button class="primary-btn" type="submit">Add to question bank</button><button class="secondary-btn" type="button" id="exportQuestions">Export bank JSON</button><label class="secondary-btn import-label">Import JSON<input id="importQuestions" type="file" accept="application/json,.json" hidden></label></div>
           </form>
@@ -222,21 +207,29 @@
         <div class="question-list" id="questionList"></div>
       </section>
 
-      <section class="view" id="view-papers" data-title="PaperShield">
+      <section class="view" id="view-papers" data-title="Exam setup">
         <div class="section-heading">
-          <div><p>Adaptive assembly engine</p><h2>100-paper AI shuffler</h2></div>
-          <div class="button-row"><button class="secondary-btn" id="toggleShuffler">Pause</button><button class="primary-btn" id="generatePapersBtn">Regenerate</button></div>
+          <div><h2>Configure an exam</h2><p>Saved exams are available to candidates in this browser.</p></div>
+          <label class="search-box"><span>Exam</span><select id="savedExamEdit"><option value="">New exam</option></select></label>
         </div>
-        <article class="paper-panel">
-          <div class="entropy-orb"><strong id="shuffleTick">0000</strong><span>cycles</span></div>
-          <div><span>Current entropy</span><h3 id="shuffleEntropy">99.8% entropy</h3><p>Every paper stays balanced across subjects while the candidate pool changes in memory.</p></div>
-        </article>
+        <form class="panel exam-setup" id="examSetupForm">
+          <label class="wide">Exam name<input id="examName" name="name" required maxlength="100" placeholder="e.g. Fire Safety Certification"></label>
+          <label>Question source<select id="examSource" name="source"><option value="organization">Organization questions</option><option value="demo">Science sample</option></select></label>
+          <label>Subject<select id="examSubject" name="subject"><option value="">All subjects</option></select></label>
+          <p class="wide exam-availability" id="examAvailability" aria-live="polite"></p>
+          <label>Questions<input id="examCount" name="count" type="number" min="1" max="500" required value="10"></label>
+          <label>Time limit (minutes)<input id="examMinutes" name="minutes" type="number" min="1" max="720" required value="30"></label>
+          <label>Points per correct answer<input id="examCorrect" name="correct" type="number" min="1" max="100" required value="1"></label>
+          <label>Points per incorrect answer<input id="examIncorrect" name="incorrect" type="number" min="-100" max="0" required value="0"></label>
+          <div class="button-row wide"><button class="primary-btn" type="submit">Save exam</button><button class="secondary-btn" id="generatePapersBtn" type="button">Generate paper variants</button><button class="text-btn" id="removeExam" type="button" hidden>Remove exam</button></div>
+        </form>
+        <h3 id="paperVariantsHeading">Paper variants</h3>
         <div class="paper-list" id="paperTable"></div>
       </section>
 
       <section class="view" id="view-sentinel" data-title="Sentinel">
         <div class="section-heading">
-          <div><p>Local AI anomaly analysis</p><h2>Sentinel operations</h2></div>
+          <div><p>Simulated anomaly analysis</p><h2>Risk signals</h2></div>
           <button class="primary-btn" id="manualSentinelSweep">Run manual sweep</button>
         </div>
         <div class="sentinel-board">
@@ -247,26 +240,26 @@
 
       <section class="view" id="view-audit" data-title="Audit">
         <div class="section-heading">
-          <div><p>Tamper-evident local event chain</p><h2>Security audit</h2></div>
+          <div><p>Browser-local hash-linked events</p><h2>Security audit</h2></div>
           <div class="button-row"><button class="secondary-btn" id="exportAuditBtn">Export</button><button class="primary-btn" id="verifyAuditBtn">Verify</button></div>
         </div>
         <article class="integrity-panel"><span>Merkle root</span><strong id="merkleRoot">Calculating</strong><p id="integrityStatus">Audit chain is waiting for verification.</p></article>
         <div class="audit-table" id="auditTable"></div>
       </section>
 
-      <section class="view" id="view-unlock" data-title="NEET Lock">
+      <section class="view" id="view-unlock" data-title="Local admin">
         <div class="admin-panel">
           <div>
             <p class="eyebrow">Local administrator setup</p>
-            <h2>Unlock and recovery controls</h2>
-            <p>The passphrase stays inside browser storage for this prototype. Use this section to initialize, unlock, or reset the local admin profile.</p>
+            <h2>Passphrase demonstration</h2>
+            <p>Use a test passphrase. This demonstration stores it in this browser.</p>
           </div>
-          <label><span>Administrator name</span><input id="setupAdminName" value="Security Authority" maxlength="48"></label>
+          <label><span>Administrator name</span><input id="setupAdminName" maxlength="64"></label>
           <label><span>Master passphrase</span><input type="password" id="setupPassphrase" placeholder="Minimum 4 characters"></label>
           <label><span>Confirm passphrase</span><input type="password" id="setupConfirm" placeholder="Repeat passphrase"></label>
-          <button class="primary-btn full" id="initializeBtn">Initialize secure workspace</button>
+          <button class="primary-btn full" id="initializeBtn">Save test passphrase</button>
           <label><span>Unlock vault</span><input type="password" id="unlockPassphrase" placeholder="Enter master passphrase"></label>
-          <button class="secondary-btn full" id="unlockBtn">Authenticate vault</button>
+          <button class="secondary-btn full" id="unlockBtn">Verify passphrase</button>
           <button class="text-btn full" id="resetAdminBtn">Reset local admin setup</button>
           <a class="hack-link" href="hack_test.html" target="_blank" rel="noreferrer">Open safe attack simulator</a>
         </div>
@@ -295,6 +288,7 @@
   <script src="lockdown.js"></script>
   <script src="monitoring.js"></script>
   <script src="assistant.js"></script>
+  <script src="workspace.js"></script>
   <script src="learning.js"></script>
   <script src="app.js"></script>
 </body>

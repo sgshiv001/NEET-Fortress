@@ -72,7 +72,7 @@
       discrimination: +(0.26 + ((localIndex * 7) % 55) / 100).toFixed(2),
       bloom: ["Remember", "Understand", "Apply", "Analyse", "Evaluate"][difficulty - 1],
       quality: 72 + ((localIndex * 11) % 27),
-      source: localIndex % 9 === 0 ? "PYQ-aligned" : "Verified contributor",
+      source: "Generated science sample",
       exposure: (localIndex * 3) % 7
     };
   }
@@ -92,12 +92,11 @@
     generate,
     questions: generate(924),
     get(id) { return this.questions.find(q => q.id === id); },
-    stats() {
-      return Object.keys(chapters).map(subject => ({
+    stats(questions = this.questions) {
+      return Array.from(Map.groupBy(questions, q => q.subject), ([subject, rows]) => ({
         subject,
-        count: this.questions.filter(q => q.subject === subject).length,
-        averageQuality: Math.round(this.questions.filter(q => q.subject === subject).reduce((s, q) => s + q.quality, 0) / this.questions.filter(q => q.subject === subject).length)
-      }));
+        count: rows.length,
+      })).sort((a, b) => a.subject.localeCompare(b.subject));
     }
   };
 })(window);

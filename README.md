@@ -1,145 +1,65 @@
-# NEET Fortress
+# Exam Fortress
 
-![NEET Fortress — Protect the Paper. Preserve the Exam.](public/neet-fortress-banner.png)
+Exam Fortress is a browser-based exam security and operations prototype for schools, colleges, universities, training providers, certification bodies, employers, and other organizations. Use it to try the workflow for classroom tests, university assessments, entrance exams, professional certifications, and workplace training.
 
-**Protect the paper. Preserve the exam.**
+## App working report
 
-NEET Fortress is an early-stage exam security and operations prototype focused on protecting NEET question banks and exam papers. It brings paper assembly, local access signals, audit views, and student practice flows into one browser interface.
-
-> **Project status:** Prototype. The security views are demonstrations, not a guarantee that an exam paper cannot be leaked. The included questions are generated sample content and must be replaced with reviewed material before educational use.
-
-## What it includes
-
-| Area | Current capability |
+| Area | What works |
 | --- | --- |
-| NEET PaperGuard | Security overview, local event feed, recommendations, and system status |
-| Student hub | Full 180-question mock exams and 20-question focused practice |
-| Exam runner | Timer, answer selection, question palette, mark-for-review, resume after reload, and submit flow |
-| Results | NEET-style marking (+4 / −1 / 0), subject breakdown, accuracy, and answer review |
-| QuestionVault | Search, add questions, import/export JSON, subject summaries, and demo question set |
-| PaperShield | Randomized paper candidates assembled from the available question bank |
-| PaperGuard monitoring | Optional browser camera/microphone signals for motion, light, and sound |
-| NEET Lock | Local administrator setup and unlock demonstration |
-| Audit and Sentinel | Local event-chain demonstration and simulated anomaly summaries |
-| Intelligence API | `/api/intelligence` fetches public planning signals when available and returns a fallback payload otherwise |
+| Organization welcome | Enter an organization name and type, select a workspace role, and see a time-of-day greeting. On Sites, the greeting uses the signed-in ChatGPT display name when identity is available. |
+| Role-based navigation | Guests and candidates open the candidate hub. Invigilators open monitoring and can view risk signals and audit events. Exam coordinators configure exams and manage question banks. Administrators also see the local passphrase demo. |
+| Question bank | Create, search, import, and export questions for any subject or topic. The runner supports single-answer questions with two to six options, including true/false. |
+| Exam setup | Name an assessment, choose a question bank and optional subject, and configure the question count, duration, correct-answer points, and incorrect-answer penalty. Edit or remove saved exams from the candidate hub. |
+| Paper variants | Generate randomized variants from the selected question pool and inspect their subject distribution. The timed runner uses the same selection logic. |
+| Candidate assessment | Start or resume a timed exam, mark questions for review, submit, and see scoring and answer explanations. A generated science mock and focused practice are available as samples. |
+| Security activity | View and verify browser-local audit events, export the audit as JSON, and try simulated risk signals. Staff can enable optional local motion, light, and sound analysis. |
 
-Camera and microphone access is optional. Students can enter the app and use the exam flow without granting either permission.
+### Try a complete workflow
 
-## Project map
+1. Open Exam Fortress. Enter your organization details, select **Exam coordinator**, and choose **Open workspace**.
+2. In **Question bank**, add a few questions or import a JSON file.
+3. In **Exam setup**, configure the assessment and save it. Use **Generate paper variants** to preview randomized sets.
+4. Open the profile from the workspace header and select **Candidate**. Start the saved exam from **Candidate hub**, answer questions, and submit.
+5. Switch back to the coordinator profile and open **Audit** to verify or export exam setup and submission events.
 
-```text
-app/                         Vinext host page, metadata, and API routes
-  api/intelligence/          Public planning and telemetry endpoint
-  chatgpt-auth.ts            Optional Sign in with ChatGPT helpers
-db/                          Drizzle schema and optional D1 access
-drizzle/                     Existing SQL migration artifacts
-public/neet-fortress-banner.png  README/social preview artwork
-public/fortress/              Main browser dashboard and its modules
-  index.html                  Interface and screen structure
-  app.js                      Navigation, rendering, and event wiring
-  learning.js                 Exam state, scoring, and browser persistence
-  questions.js                Generated sample question bank
-  engine.js                   Randomized paper assembly
-  monitoring.js               Consent-based local media signal processing
-  security.js, dsa.js          Local audit and cryptographic demonstrations
-tests/                        Rendered page and browser-module checks
-worker/index.ts               Cloudflare Worker entry point
-```
+### Verification
 
-### How the current app is wired
+The production build and all 12 automated checks passed. In a local browser, a coordinator created a workplace-safety certification exam, generated a paper variant, and saved the exam. The candidate opened it with a five-minute timer, resumed it after a reload, and received 3 out of 3 under the configured marking scheme.
 
-```mermaid
-flowchart LR
-  Browser[Browser] --> Host[Vinext host page]
-  Host --> UI[Fortress dashboard]
-  UI --> Exam[Student exam flow]
-  UI --> Admin[Security and paper controls]
-  Exam --> Local[(Browser localStorage)]
-  Admin --> Local
-  Host --> API[/api/intelligence/]
-  API --> Feeds[Public planning feeds]
-  API --> Fallback[Fallback response]
-  API -. optional snapshot .-> D1[(Cloudflare D1)]
-```
+### Question bank format
 
-Student attempts and administrator-added questions currently stay in that browser's `localStorage`. The student exam flow does not yet use D1, user accounts, or server-side exam timing.
-
-## Run it locally
-
-### Requirements
-
-- Node.js `>=22.13.0`
-- npm
-
-### Start the development server
-
-```bash
-npm install
-npm run dev
-```
-
-Open the local URL printed by Vinext. The dashboard is served at `/fortress/index.html` inside the host page.
-
-### Available commands
-
-```bash
-npm run dev          # Start local development
-npm run build        # Create a production build
-npm start            # Serve the production build
-npm test             # Build and run the rendered HTML checks
-npm run lint         # Run ESLint
-npm run db:generate  # Generate Drizzle migrations from schema changes
-```
-
-## Question bank format
-
-The question editor imports JSON in either of these forms:
+Import a JSON array of questions or an object with a `questions` array. Use `chapter` for the topic and a zero-based `answer` index. `id`, `difficulty` (1–5), and `explanation` are optional.
 
 ```json
 {
   "questions": [
     {
-      "id": "PHY-001",
-      "subject": "Physics",
-      "chapter": "Laws of Motion",
-      "text": "A sample question goes here.",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "subject": "Workplace safety",
+      "chapter": "Emergency procedures",
+      "text": "Which route should you use during a fire evacuation?",
+      "options": ["The marked emergency exit route", "The elevator"],
       "answer": 0,
-      "difficulty": 2,
-      "explanation": "Explanation shown during answer review."
+      "explanation": "Follow the marked route to the designated assembly point."
     }
   ]
 }
 ```
 
-The root can also be the question array itself. `answer` is a zero-based option index (`0` through `3`). Subjects must be `Physics`, `Chemistry`, `Botany`, or `Zoology`. The question editor can export the currently loaded bank as JSON.
+## Local preview and production requirements
 
-## Data and security boundaries
+- Profiles, the organization question bank, saved exams, attempts, and audit events use browser storage. The bank and exam catalog are shared within that browser. Signed-in Sites users have separate local profiles and attempt histories.
+- Workspace roles are selectable for demonstrations. Live institutional use requires server-enforced roles, organization membership, exam assignment, and isolated storage.
+- The current timer, answer keys, results, and hash-linked audit run in the browser. High-stakes deployment requires server-side timing and scoring, protected paper release, and durable audit records.
+- Camera and microphone monitoring starts only after browser permission. Processing stays in the current session. Media is never recorded, stored, or uploaded. The risk indicators are demonstrations.
+- The assessment runner currently supports single-answer objective questions. Written, oral, practical, and file-based assessments would require additional workflows.
 
-- The built-in 924-question bank is generated demonstration content; questions and answers may be repetitive or inaccurate.
-- Student names, attempts, and custom questions are saved only in the current browser. They do not sync across devices and can be removed when browser storage is cleared.
-- The local administrator passphrase and several security state views are prototype-only; they do not provide production identity or authorization.
-- Media monitoring starts only after an explicit administrator action. Browser frames/audio are analyzed for basic environmental signals; this is not identity verification and cannot prove misconduct.
-- Paper shuffling, Sentinel scores, and the audit view demonstrate interface concepts. They do not guarantee confidentiality, prevent exfiltration, or replace a security review.
-- `.openai/hosting.json` currently has no D1 binding configured. The optional D1/Drizzle foundation is not used to save student attempts or the question bank.
+## Run locally
 
-## Before a real deployment
+Use Node.js 22.13 or newer.
 
-1. Replace the generated set with an accurately sourced, reviewed question bank and explanations.
-2. Add authenticated student/admin roles and server-side authorization.
-3. Configure D1 and move question, paper, attempt, and audit data behind server APIs.
-4. Enforce exam timing and answer submission on the server; add backups and operational monitoring.
-5. Review privacy, consent, data retention, accessibility, and security requirements for the intended exam setting.
+```sh
+npm install
+npm run dev
+```
 
-The existing ChatGPT sign-in helper is available in `app/chatgpt-auth.ts`, but it is not connected to the student dashboard or an authorization policy.
-
-## Stack
-
-- React 19 and Vinext
-- Vite and Cloudflare Workers tooling
-- Drizzle ORM with optional Cloudflare D1
-- Standalone HTML/CSS/JavaScript dashboard under `public/fortress/`
-
-## Product names
-
-**NEET Fortress** is the platform. The project uses **NEET PaperGuard** for the security command center, **PaperGuard** for optional access monitoring, **QuestionVault** for the question bank, **PaperShield** for paper assembly, and **NEET Lock** for admin controls. **ExamVault** is reserved for a future protected paper storage and release workflow; it is not implemented yet. These names describe intended product areas, not guarantees that papers cannot be leaked.
+Open the local URL printed by Vinext. Run `npm test` to build the Worker and run the host and browser-module tests.

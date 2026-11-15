@@ -13,6 +13,20 @@
     return arr;
   };
 
+  function assembleExamQuestions(bank, count) {
+    const bySubject = Map.groupBy(shuffle(bank), question => question.subject);
+    let groups = Array.from(bySubject.values());
+    const selected = [];
+    while (selected.length < count && groups.length) {
+      for (const group of groups) {
+        selected.push(group.pop());
+        if (selected.length === count) break;
+      }
+      groups = groups.filter(group => group.length);
+    }
+    return shuffle(selected);
+  }
+
   class RandomWizer {
     constructor(bank) { this.bank = bank; this.papers = []; }
     pickSubject(subject, paperIndex) {
@@ -22,17 +36,19 @@
       const buckets = [1, 2, 3, 4, 5].flatMap(level => rotated.filter(q => q.difficulty === level).slice(0, 9));
       return shuffle(buckets).slice(0, 45);
     }
-    generatePaper(index) {
-      const questions = ["Physics", "Chemistry", "Botany", "Zoology"].flatMap(subject => this.pickSubject(subject, index));
-      const balance = Math.round(questions.reduce((s, q) => s + q.quality, 0) / questions.length);
+    generatePaper(index, count) {
+      const questions = count === undefined
+        ? ["Physics", "Chemistry", "Botany", "Zoology"].flatMap(subject => this.pickSubject(subject, index))
+        : assembleExamQuestions(this.bank, count);
+      const quality = questions.length ? Math.round(questions.reduce((sum, q) => sum + (q.quality || 0), 0) / questions.length) : 0;
       return {
-        id: `NF-PAPER-${String(index + 1).padStart(3, "0")}`,
-        questions: shuffle(questions), quality: Math.min(99, balance + (index % 5)),
-        accessCount: index % 7, entropy: +(98.8 + (index % 12) / 10).toFixed(1),
+        id: `EF-PAPER-${String(index + 1).padStart(3, "0")}`,
+        questions: shuffle(questions), quality,
+        accessCount: 0, entropy: +(98.8 + (index % 12) / 10).toFixed(1),
         createdAt: Date.now(), hash: global.FortressDSA.fallbackHash(questions.map(q => q.id).join("|"))
       };
     }
-    generateSet(total = 100) { this.papers = Array.from({ length: total }, (_, i) => this.generatePaper(i)); return this.papers; }
+    generateSet(total = 100, count) { this.papers = Array.from({ length: total }, (_, i) => this.generatePaper(i, count)); return this.papers; }
     top(count = 10) { return this.papers.slice().sort((a, b) => (b.quality - a.quality) || (a.accessCount - b.accessCount)).slice(0, count); }
     finalAssembly() {
       const candidates = this.top(10);
@@ -61,6 +77,7 @@
   }
 
   global.RandomWizer = RandomWizer;
+  global.assembleExamQuestions = assembleExamQuestions;
   global.HyperShuffler = HyperShuffler;
   global.shuffleSecure = shuffle;
 })(window);

@@ -12,28 +12,40 @@
       this.audit = JSON.parse(localStorage.getItem(this.storageKey) || "[]");
       this.fingerprint = this.makeFingerprint();
       this.merkleRoot = "";
+      this.pendingWrite = Promise.resolve();
     }
     makeFingerprint() {
       return global.FortressDSA.fallbackHash([navigator.userAgent, screen.width, screen.height, navigator.language].join("|")).slice(0, 16).toUpperCase();
     }
-    async log(type, detail, severity = "info") {
-      const previous = this.audit.at(-1)?.hash || "0".repeat(64);
-      const entry = { id: `EVT-${String(this.audit.length + 1).padStart(5, "0")}`, timestamp: Date.now(), type, detail, severity, device: this.fingerprint, previous };
-      entry.hash = await global.FortressDSA.sha256(entry);
-      this.audit.push(entry);
-      if (this.audit.length > 500) this.audit = this.audit.slice(-500);
-      localStorage.setItem(this.storageKey, JSON.stringify(this.audit));
-      global.dispatchEvent(new CustomEvent("fortress-audit", { detail: entry }));
-      return entry;
+    log(type, detail, severity = "info") {
+      const append = async () => {
+        const events = JSON.parse(localStorage.getItem(this.storageKey) || "[]");
+        const last = events.at(-1);
+        const sequence = last ? Number(last.id.slice(4)) + 1 : 1;
+        const entry = { id: `EVT-${String(sequence).padStart(5, "0")}`, timestamp: Date.now(), type, detail, severity, device: this.fingerprint, previous: last?.hash || "0".repeat(64) };
+        entry.hash = await global.FortressDSA.sha256(entry);
+        const next = [...events, entry].slice(-500);
+        localStorage.setItem(this.storageKey, JSON.stringify(next));
+        this.audit = next;
+        global.dispatchEvent(new CustomEvent("fortress-audit", { detail: entry }));
+        return entry;
+      };
+      const write = this.pendingWrite.then(() => navigator.locks ? navigator.locks.request(this.storageKey, append) : append());
+      this.pendingWrite = write.catch(() => {});
+      return write;
     }
     async verifyAudit() {
-      for (let i = 0; i < this.audit.length; i += 1) {
-        const entry = this.audit[i];
-        if (i && entry.previous !== this.audit[i - 1].hash) return false;
+      await this.pendingWrite;
+      const events = JSON.parse(localStorage.getItem(this.storageKey) || "[]");
+      this.audit = events;
+      this.merkleRoot = "";
+      for (let i = 0; i < events.length; i += 1) {
+        const entry = events[i];
+        if (i && entry.previous !== events[i - 1].hash) return false;
         const source = { id: entry.id, timestamp: entry.timestamp, type: entry.type, detail: entry.detail, severity: entry.severity, device: entry.device, previous: entry.previous };
         if (await global.FortressDSA.sha256(source) !== entry.hash) return false;
       }
-      const tree = new global.FortressDSA.MerkleTree(this.audit.map(e => e.hash));
+      const tree = new global.FortressDSA.MerkleTree(events.map(e => e.hash));
       this.merkleRoot = await tree.build();
       return true;
     }

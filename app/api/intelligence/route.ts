@@ -72,7 +72,7 @@ const fallback: IntelligencePayload = {
 
 async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url, {
-    headers: { "user-agent": "neet-fortress-command-center/1.0" },
+    headers: { "user-agent": "exam-fortress/1.0" },
     next: { revalidate: 900 },
   });
 
